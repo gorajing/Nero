@@ -109,7 +109,7 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
       }),
     );
   } else {
-    console.warn('[events] window.companion.onActionEvent unavailable — avatar will not animate from executor events yet.');
+    console.warn('[events] Nero bridge unavailable: window.companion.onActionEvent missing.');
   }
 
   if (companion?.onRunEnd) {

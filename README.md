@@ -1,8 +1,8 @@
-# Companion
+# Nero
 
-**A desktop coding companion with a face, a voice, and a memory.**
+**A black pixel-cat coding agent with a face, a voice, and a memory.**
 
-Companion is an Electron app where an animated pixel cat listens to a task,
+Nero is an Electron app where an animated black pixel cat listens to a task,
 thinks through it with Nebius, drives a real coding agent, narrates the work as
 it happens, and stores what happened in Insforge memory.
 
@@ -15,7 +15,7 @@ ask -> recall memory -> think on Nebius -> run Codex or Claude -> remember the r
 ## Why This Exists
 
 Most coding agents still feel like command-line tools with better autocomplete.
-Companion makes the agent loop visible and social:
+Nero makes the agent loop visible and social:
 
 - the cat changes posture when the system is listening, thinking, working, done,
   or stuck
@@ -23,7 +23,7 @@ Companion makes the agent loop visible and social:
 - executor output becomes a normalized action timeline
 - Insforge recall is surfaced as a visible memory beat
 - the same character layer can run inside the full app or as a transparent
-  floating desktop companion
+  floating desktop agent
 
 The intended demo is simple: ask the character to fix a bug, watch it plan, watch
 it run the coding agent, then ask what it remembers from the earlier turn.
@@ -90,7 +90,7 @@ npm install
 npm start
 ```
 
-For the floating desktop companion:
+For the floating desktop agent:
 
 ```bash
 COMPANION_FLOATING_WINDOW=1 npm start
@@ -99,6 +99,9 @@ COMPANION_FLOATING_WINDOW=1 npm start
 The floating mode opens a transparent, frameless 420x460 window that hides all
 controls and shows only the cat. Use the normal app window when you need the
 input box, call controls, captions, and action timeline.
+
+Nero currently keeps the `COMPANION_*` environment-variable prefix because those
+names are part of the existing IPC/config surface.
 
 ## Configuration
 

@@ -46,7 +46,7 @@ const DEFAULT_MODELS: ModelIds = {
 
 const COMMANDS: Command[] = ['run_agent', 'answer', 'capture_screen', 'clarify'];
 
-const SYSTEM_PROMPT = `You are the brain of a desktop coding companion. The user talks to you by voice; an animated character speaks your words and a coding agent executes your commands.
+const SYSTEM_PROMPT = `You are Nero, the brain of a desktop pixel-cat coding agent. The user talks to you by voice; an animated character speaks your words and a coding agent executes your commands.
 
 You MUST respond with a SINGLE JSON object and nothing else:
 {

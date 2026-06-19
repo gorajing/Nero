@@ -2,10 +2,10 @@
 
 This folder is served verbatim at the web root (`/live2d/...`) by Vite/Electron
 Forge. **Nothing here is bundled** — the files are fetched at runtime by the
-renderer. The app boots and shows a **placeholder avatar** when these assets are
+renderer. Nero boots and shows the built-in pixel cat when these assets are
 missing, so you can develop Voice + the event pipeline before a model exists.
 
-To make the real avatar come alive, drop in two things:
+To swap Nero to a Live2D avatar, drop in two things:
 
 ## 1. Cubism Core runtime (required for ANY Live2D model)
 

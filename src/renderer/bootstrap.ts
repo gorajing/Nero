@@ -78,7 +78,7 @@ export async function bootstrap(): Promise<void> {
     try {
       setStatus('Starting call…');
       await voice.startCompanionCall();
-      setStatus('Call active. Speak to Companion.');
+      setStatus('Call active. Speak to Nero.');
       if (startBtn) startBtn.disabled = true;
       if (stopBtn) stopBtn.disabled = false;
       if (muteBtn) muteBtn.disabled = false;
@@ -135,7 +135,7 @@ export async function bootstrap(): Promise<void> {
 
     const companion = getCompanion();
     if (!companion?.turnRun) {
-      setStatus('Orchestrator unavailable (window.companion.turnRun missing).');
+      setStatus('Nero bridge unavailable (window.companion.turnRun missing).');
       return;
     }
 

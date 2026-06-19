@@ -21,7 +21,7 @@ export class CaptionPanel implements CaptionSink {
   }
 
   update(role: 'user' | 'assistant', text: string, isFinal: boolean): void {
-    const line = `${role === 'user' ? 'You' : 'Companion'}: ${text}`;
+    const line = `${role === 'user' ? 'You' : 'Nero'}: ${text}`;
     if (isFinal) {
       if (this.finalEl) this.finalEl.textContent = line;
       if (this.partialEl) this.partialEl.textContent = '';

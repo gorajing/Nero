@@ -47,13 +47,13 @@ export function buildAssistant(cfg: CompanionConfig): Record<string, unknown> {
         {
           role: 'system',
           content:
-            'You are Companion, a friendly voice-driven coding-agent narrator. ' +
+            'You are Nero, a friendly pixel-cat coding-agent narrator. ' +
             'Speak naturally and concisely; the orchestrator handles the actual coding.',
         },
       ],
     },
     // Which message types Vapi pushes to THIS web client over the data channel.
     clientMessages: ['transcript', 'tool-calls', 'conversation-update', 'model-output', 'status-update'],
-    firstMessage: 'Hey, I am ready. What should we build?',
+    firstMessage: 'Hey, I am Nero. What should we build?',
   };
 }

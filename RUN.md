@@ -1,8 +1,8 @@
-# Companion — Run & Integration Guide
+# Nero — Run & Integration Guide
 
 Built via multi-agent (Codex + Claude) on 2026-06-19. **8 components, type-check clean together (TS 5.6, 0 src errors), executor live-verified against codex 0.139.0.** The headless-testable core is proven; the steps below are what needs *your Mac + keys* to bring it alive.
 
-## 1. Keys — create `app/.env`
+## 1. Keys — create `.env`
 ```
 NEBIUS_API_KEY=...
 NEBIUS_MODEL=deepseek-ai/DeepSeek-R1-0528
@@ -13,6 +13,8 @@ INSFORGE_KEY=...
 ANTHROPIC_API_KEY=...                 # only if you use the Claude executor (Codex is default)
 COMPANION_WORKDIR=/abs/path/to/scratch-git-repo   # the repo the agent actually codes in
 ```
+> Nero still uses the `COMPANION_*` env prefix for compatibility with the existing runtime config and IPC surfaces.
+
 > Verify Nebius ids first: `curl -s https://api.tokenfactory.nebius.com/v1/models -H "Authorization: Bearer $NEBIUS_API_KEY" | grep -o '"id":"[^"]*"' | head` — catalog rotates; fix the env if an id differs.
 
 ## 2. Provision Insforge (once) — run this SQL in your project
@@ -36,13 +38,13 @@ $func$;
 ```
 Then smoke-test: a `remember()` + `recall()` round-trip should return the row with a similarity score.
 
-## 3. Live2D model (optional — placeholder works without it)
-Drop `live2dcubismcore.min.js` + a Cubism-4 model into `app/public/live2d/` (default `public/live2d/Haru.model3.json`). See `app/public/live2d/README.md`. Without it the character is a state-colored placeholder (fully functional — same `CharacterDriver` API). Tune the state→expression/motion map to the real model's group names.
+## 3. Live2D model (optional — Nero works without it)
+Drop `live2dcubismcore.min.js` + a Cubism-4 model into `public/live2d/` (default `public/live2d/Haru.model3.json`). See `public/live2d/README.md`. Without it Nero renders as the built-in pixel cat (fully functional — same `CharacterDriver` API). Tune the state→expression/motion map to the real model's group names.
 
 ## 4. Voice proxy (Vapi → Nebius) — Vapi can't reach localhost, and appends `/chat/completions`
 ```
 # terminal A — start the SSE proxy (listens on :8788)
-cd app && npx tsx src/proxy/index.ts
+npx tsx src/proxy/index.ts
 # terminal B — expose it
 ngrok http 8788          # copy the https URL
 ```
@@ -61,7 +63,7 @@ Grant **Microphone** + **Screen Recording** to the launching binary; **relaunch*
 
 ## 6. Run
 ```
-cd app && npm start
+npm start
 ```
 Summon (Cmd+Shift+Space) → click **Start** (mic-gesture gate) → speak a task → the character thinks (Nebius `reasoning_content`) → drives Codex in `COMPANION_WORKDIR` (each action narrated + animated) → writes to Insforge memory. Then ask *"what did we do?"* for the pgvector recall beat.
 

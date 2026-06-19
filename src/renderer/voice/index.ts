@@ -53,7 +53,7 @@ export function createVoice(opts: CreateVoiceOptions): VoiceController {
         wired = true;
       }
       if (config.vapiAssistantId) {
-        // Server-side path: start with the existing gpt-4.1 "Companion" assistant id.
+        // Server-side path: start with the existing hosted Nero assistant id.
         // No local custom-llm proxy needed yet; the brain swaps to Nebius server-side
         // later (by repointing this assistant's model), not in the renderer.
         // @vapi-ai/web's start() accepts an assistant-id string as its first arg.

@@ -28,7 +28,7 @@ export class BlackFrameError extends Error {
 }
 
 export async function captureScreen(): Promise<ScreenImage> {
-  const pngPath = join(tmpdir(), `companion-screen-${randomUUID()}.png`);
+  const pngPath = join(tmpdir(), `nero-screen-${randomUUID()}.png`);
 
   try {
     try {
@@ -43,7 +43,7 @@ export async function captureScreen(): Promise<ScreenImage> {
     } catch (error) {
       if (isScreenCaptureUnavailable(error)) {
         throw new BlackFrameError(
-          'Screen capture could not create an image from the display. Grant Screen Recording to the process that launches Companion, then relaunch it.',
+          'Screen capture could not create an image from the display. Grant Screen Recording to the process that launches Nero, then relaunch it.',
         );
       }
       throw error;
@@ -54,7 +54,7 @@ export async function captureScreen(): Promise<ScreenImage> {
 
     if (isBlackFrame(stats)) {
       throw new BlackFrameError(
-        'Screen capture returned an all-black or near-uniform frame. Grant Screen Recording to the process that launches Companion, then relaunch it.',
+        'Screen capture returned an all-black or near-uniform frame. Grant Screen Recording to the process that launches Nero, then relaunch it.',
       );
     }
 

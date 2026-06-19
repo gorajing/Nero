@@ -1,8 +1,8 @@
 {
-  "name": "app",
-  "productName": "app",
+  "name": "nero",
+  "productName": "Nero",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A pixel-cat coding agent with a face, a voice, and a memory.",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
