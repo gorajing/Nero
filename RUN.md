@@ -36,8 +36,10 @@ $func$;
 ```
 Then smoke-test: a `remember()` + `recall()` round-trip should return the row with a similarity score.
 
-## 3. Live2D model (optional — placeholder works without it)
-Drop `live2dcubismcore.min.js` + a Cubism-4 model into `app/public/live2d/` (default `public/live2d/Haru.model3.json`). See `app/public/live2d/README.md`. Without it the character is a state-colored placeholder (fully functional — same `CharacterDriver` API). Tune the state→expression/motion map to the real model's group names.
+## 3. The avatar — a hand-built pixel-art cat (default; no assets needed)
+The character is a procedurally-drawn 16-bit pixel cat that ships **in code** — it animates through agent state with posture (stands / sits / **walks** while working, with a real leg cycle) and needs **no model files**. It renders out of the box, with no extra setup.
+
+> **Optional — swap in a Live2D model instead.** Drop `live2dcubismcore.min.js` + a Cubism-4 model into `app/public/live2d/` and point `modelUrl` at it (see `app/public/live2d/README.md`). The same model-agnostic `CharacterDriver` facade drives either one, so voice + the event pipeline are unchanged; tune the state→expression/motion map in `stateMachine.ts` to the real model's group names.
 
 ## 4. Voice proxy (Vapi → Nebius) — Vapi can't reach localhost, and appends `/chat/completions`
 ```
@@ -51,7 +53,8 @@ Inject renderer config (in `index.html` before the bundle, or via preload):
 window.COMPANION_CFG = {
   vapiPublicKey: '...', customLlmUrl: '<ngrok-https-root>',
   customLlmModel: 'deepseek-ai/DeepSeek-R1-0528', voiceId: '<11labs-id>',
-  modelUrl: '/live2d/Haru.model3.json',
+  // modelUrl is OPTIONAL — only set it if you added a Live2D model (§3).
+  // The default pixel cat needs no path.
 };
 ```
 Set the Vapi assistant `model.url` = the **ngrok root** (no `/chat/completions` — Vapi appends it).
@@ -80,7 +83,7 @@ window for controls and debugging.
 
 ## Proven vs. needs-your-machine
 - **✅ Proven headlessly:** all 8 modules type-check together (0 src errors); executor live-verified vs real codex 0.139.0; renderer Vite build OK (500 modules); brain/memory/vision/proxy code-complete + scoped-clean.
-- **⚠️ Not yet run (needs Mac + keys):** Electron GUI; mic TCC prompt; Vapi voice call; live Nebius (decide/vision/embed); Insforge round-trip (after §2); screen capture (after §5 grant); the Live2D model.
+- **⚠️ Not yet run (needs Mac + keys):** Electron GUI; mic TCC prompt; Vapi voice call; live Nebius (decide/vision/embed); Insforge round-trip (after §2); screen capture (after §5 grant). *(The pixel-cat avatar needs none of these — it renders in code. Only an **optional** Live2D model swap is untested.)*
 
 ## Known notes
 - Codex v0.139.0 emits no standalone `reasoning` events (CoT folds into `agent_message`) → the "thinking" animation is driven by the **Nebius brain's** `reasoning_content`, not Codex.
