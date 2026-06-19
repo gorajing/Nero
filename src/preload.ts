@@ -19,7 +19,7 @@ type AgentKindArg = 'codex' | 'claude';
 // A sandboxed preload CAN read process.argv, so we parse the --companion-cfg= argv element
 // here and expose it as window.COMPANION_CFG for src/renderer/config.ts to consume.
 const cfgArg = process.argv.find((a) => a.startsWith('--companion-cfg='));
-let companionCfg: Record<string, string> = {};
+let companionCfg: Record<string, string | boolean> = {};
 if (cfgArg) {
   try {
     companionCfg = JSON.parse(cfgArg.slice('--companion-cfg='.length));

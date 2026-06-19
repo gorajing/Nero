@@ -41,6 +41,8 @@ export interface CompanionConfig {
   voiceId: string;
   /** Live2D model path under /live2d (public dir). Absent file -> placeholder. */
   modelUrl: string;
+  /** Opt-in transparent frameless window mode for the floating character demo. */
+  floatingWindow: boolean;
 }
 
 function viteEnv(_key: string): string | undefined {
@@ -51,7 +53,15 @@ function viteEnv(_key: string): string | undefined {
 
 function read(field: keyof CompanionConfig, viteKey: string, fallback: string): string {
   const fromWindow = typeof window !== 'undefined' ? window.COMPANION_CFG?.[field] : undefined;
-  return fromWindow ?? viteEnv(viteKey) ?? fallback;
+  return typeof fromWindow === 'string' ? fromWindow : viteEnv(viteKey) ?? fallback;
+}
+
+function readBool(field: keyof CompanionConfig, viteKey: string, fallback: boolean): boolean {
+  const fromWindow = typeof window !== 'undefined' ? window.COMPANION_CFG?.[field] : undefined;
+  if (typeof fromWindow === 'boolean') return fromWindow;
+  const raw = typeof fromWindow === 'string' ? fromWindow : viteEnv(viteKey);
+  if (raw === undefined) return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(raw.toLowerCase());
 }
 
 export function loadConfig(): CompanionConfig {
@@ -65,5 +75,6 @@ export function loadConfig(): CompanionConfig {
     transcriberModel: read('transcriberModel', 'VITE_TRANSCRIBER_MODEL', 'nova-2'),
     voiceId: read('voiceId', 'VITE_VAPI_VOICE_ID', 'burt'),
     modelUrl: read('modelUrl', 'VITE_LIVE2D_MODEL_URL', './live2d/Haru.model3.json'),
+    floatingWindow: readBool('floatingWindow', 'VITE_COMPANION_FLOATING_WINDOW', false),
   };
 }
