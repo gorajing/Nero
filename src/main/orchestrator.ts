@@ -13,7 +13,7 @@
 // STREAMING RULE (BUILD_GUIDE): ipcMain.handle is request/response only. ALL token/action
 // streams go over webContents.send push channels (CH.actionEvent, CH.runEnd, CH.brainReasoning,
 // CH.brainContent). The invoke promise resolves only with the final {runId}.
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, Notification } from 'electron';
 import { CH } from '../shared/ipc';
 import type { TurnInput } from '../shared/ipc';
 import type { ActionEvent, AgentKind } from '../shared/events';
@@ -53,6 +53,26 @@ function pushReasoning(delta: string): void {
 
 function pushContent(delta: string): void {
   getWindow()?.webContents.send(CH.brainContent, delta);
+}
+
+/**
+ * Fire a native OS notification when an agent run finishes. This is the reliable
+ * "job done" signal even when the window is hidden, backgrounded, or in cat-only
+ * floating mode (where the timeline/caption are not visible). Best-effort.
+ */
+function notifyJobDone(ok: boolean, detail?: string): void {
+  try {
+    if (!Notification.isSupported()) return;
+    const body =
+      (detail ?? '').replace(/\s+/g, ' ').trim().slice(0, 180) ||
+      (ok ? 'The coding agent finished.' : 'The coding agent stopped with an error.');
+    new Notification({
+      title: ok ? '✓ Companion — job complete' : '✗ Companion — job failed',
+      body,
+    }).show();
+  } catch (err) {
+    console.error('[orchestrator] notification failed:', (err as Error).message);
+  }
 }
 
 /** Map a canonical event to the memory kind we persist it under. */
@@ -181,6 +201,10 @@ async function dispatchExecutor(
       signal: controller.signal,
     })) {
       pushEvent(ev);
+      // Native "job done" notification on terminal events — visible even when the
+      // window is hidden or in floating mode.
+      if (ev.kind === 'run.completed') notifyJobDone(true, ev.finalText);
+      else if (ev.kind === 'run.failed') notifyJobDone(false, ev.error);
       // Fire-and-forget memory persistence so it never stalls the event stream.
       void rememberEvent(sessionId, ev);
     }
@@ -194,6 +218,7 @@ async function dispatchExecutor(
       error: (err as Error).message,
       ts: Date.now(),
     });
+    notifyJobDone(false, (err as Error).message);
   } finally {
     activeRuns.delete(runId);
     pushRunEnd(runId);

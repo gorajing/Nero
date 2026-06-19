@@ -294,6 +294,14 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       px(aura, 15, 4, 1, 1, CAT.white);
       if (blink) px(aura, 16, 5, 1, 1, CAT.eye);
       px(aura, 14, 10, 1, 1, CAT.white);
+      // An unmistakable green check above the head so 'done' reads clearly even in
+      // floating mode (where the timeline/caption are hidden and a standing cat
+      // otherwise looks identical to idle).
+      const DONE_GREEN = 0x5ad17a;
+      px(aura, 8, 1, 1, 1, DONE_GREEN);
+      px(aura, 9, 2, 1, 1, DONE_GREEN);
+      px(aura, 10, 1, 1, 1, DONE_GREEN);
+      px(aura, 11, 0, 1, 1, DONE_GREEN);
     }
     if (state === 'error') {
       px(aura, 6, 3, 1, 1, CAT.eye);
