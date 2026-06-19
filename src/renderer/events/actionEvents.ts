@@ -29,6 +29,10 @@ export interface SubscribeOptions {
 export function subscribeActionEvents(opts: SubscribeOptions): () => void {
   const { character, timeline, captions } = opts;
   const unsubs: Array<() => void> = [];
+  // Accumulates DeepSeek reasoning_content deltas for the current turn so the
+  // otherwise-silent decide phase shows live proof-of-life. Reset when the turn's
+  // narration / final summary lands (see the message / run.completed branch).
+  let reasoningBuf = '';
 
   const companion = getCompanion();
   if (companion?.onActionEvent) {
@@ -42,8 +46,10 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
         // text-input turn is legible without Vapi TTS.
         if (captions) {
           if (e.kind === 'message' && e.text) {
+            reasoningBuf = ''; // turn's spoken line has landed; end the live-reasoning view
             captions.update('assistant', e.text, true);
           } else if (e.kind === 'run.completed' && e.finalText) {
+            reasoningBuf = '';
             captions.update('assistant', e.finalText, true);
           }
         }
@@ -67,11 +73,17 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
   const brain = getBrain();
   if (brain?.onReasoning) {
     unsubs.push(
-      brain.onReasoning(() => {
-        // R1 reasoning_content tokens stream -> 'thinking'. We don't render the
-        // tokens here (the timeline shows 'reasoning' ActionEvents); we only gate
-        // the animation so it fires even before the first reasoning ActionEvent.
+      brain.onReasoning((delta: string) => {
+        // DeepSeek reasoning_content streams during decide() -> 'thinking' pose AND
+        // a live caption so the decide phase isn't silent dead air. Show the tail
+        // (most recent reasoning) labelled as Nebius for sponsor visibility.
         character.setState('thinking');
+        if (captions) {
+          reasoningBuf += delta;
+          const tail =
+            reasoningBuf.length > 240 ? '…' + reasoningBuf.slice(-240) : reasoningBuf;
+          captions.update('assistant', `DeepSeek (Nebius) is reasoning: ${tail}`, false);
+        }
       }),
     );
   }

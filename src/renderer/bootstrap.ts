@@ -106,9 +106,28 @@ export async function bootstrap(): Promise<void> {
   const promptForm = el<HTMLFormElement>('prompt-form');
   const promptInput = el<HTMLInputElement>('prompt-input');
   const sendBtn = el<HTMLButtonElement>('send-btn');
+  const cancelBtn = el<HTMLButtonElement>('cancel-btn');
+
+  // One turn at a time. A disabled submit button does NOT block the Enter key,
+  // so re-entry is gated here — concurrent turns would scramble the shared
+  // reasoning caption + button state.
+  let turnInFlight = false;
+  let cancelRequested = false;
+
+  // Arm Stop ONLY once the coding agent actually starts: cancelTask can abort a
+  // run only after the executor registers it. The pre-executor phase (Nebius
+  // decide / vision) is bounded by the brain's own 60s timeout, so there's
+  // nothing to abort there — enabling Stop then would be a lie.
+  getCompanion()?.onActionEvent((e) => {
+    if (e.kind === 'run.started') {
+      if (cancelBtn) cancelBtn.disabled = false;
+      setStatus('Coding agent running — click Stop to abort.');
+    }
+  });
 
   promptForm?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (turnInFlight) return;
     const text = promptInput?.value.trim() ?? '';
     if (!text) return;
 
@@ -118,20 +137,39 @@ export async function bootstrap(): Promise<void> {
       return;
     }
 
-    if (promptInput) promptInput.value = '';
+    // Keep the typed task on screen for the whole run (cleared in finally).
+    turnInFlight = true;
+    cancelRequested = false;
     if (sendBtn) sendBtn.disabled = true;
     captions.update('user', text, true);
     driver.setState('thinking');
-    setStatus('Thinking…');
+    setStatus('Thinking… (Nebius brain)');
 
     try {
-      const { runId } = await companion.turnRun({ transcript: text, sessionId });
-      setStatus(`Working… (${runId})`);
+      // turnRun resolves once the whole turn (incl. the agent run) ends; live
+      // feedback arrives meanwhile over the ActionEvent stream + reasoning caption.
+      await companion.turnRun({ transcript: text, sessionId });
+      setStatus(cancelRequested ? 'Stopped.' : 'Done — type another task.');
     } catch (e) {
       driver.setState('error');
       setStatus(`Turn failed: ${describeError(e)}`);
     } finally {
+      turnInFlight = false;
       if (sendBtn) sendBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (promptInput) promptInput.value = '';
+    }
+  });
+
+  cancelBtn?.addEventListener('click', async () => {
+    const companion = getCompanion();
+    if (!companion?.cancelTask) return;
+    cancelRequested = true;
+    setStatus('Stopping the agent…');
+    try {
+      await companion.cancelTask(); // no id => orchestrator aborts the latest (executor) run
+    } catch (e) {
+      setStatus(`Stop failed: ${describeError(e)}`);
     }
   });
 

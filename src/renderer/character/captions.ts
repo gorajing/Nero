@@ -34,11 +34,11 @@ export class CaptionPanel implements CaptionSink {
 function summarizeEvent(e: ActionEvent): { label: string; detail: string; status?: string } {
   switch (e.kind) {
     case 'run.started':
-      return { label: `run.started (${e.agent})`, detail: e.runId };
+      return { label: `${e.agent === 'claude' ? 'Claude' : 'Codex'} agent started`, detail: e.runId };
     case 'turn.started':
       return { label: 'turn.started', detail: e.runId };
     case 'reasoning':
-      return { label: 'reasoning', detail: e.text };
+      return { label: 'DeepSeek reasoning (Nebius)', detail: e.text };
     case 'command':
       return { label: 'command', detail: e.command, status: e.status };
     case 'file_change':
@@ -56,7 +56,7 @@ function summarizeEvent(e: ActionEvent): { label: string; detail: string; status
     case 'run.completed':
       return { label: 'run.completed', detail: e.finalText ?? '', status: 'completed' };
     case 'run.failed':
-      return { label: 'run.failed', detail: e.error, status: 'failed' };
+      return { label: 'run.failed', detail: `Agent hit an error — ${e.error.slice(0, 200)}`, status: 'failed' };
     default: {
       // Exhaustiveness guard: if a new ActionEvent kind is added, this errors.
       const _never: never = e;

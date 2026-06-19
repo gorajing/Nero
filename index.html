@@ -23,6 +23,10 @@
       <div id="overlay">
         <header id="topbar">
           <div id="brand">Companion</div>
+          <div id="powered">
+            Brain: <b>Nebius</b> · DeepSeek-V3.2 &nbsp;|&nbsp; Memory:
+            <b>Insforge</b> · pgvector
+          </div>
           <div id="controls">
             <button id="start-btn" type="button">Start call</button>
             <button id="stop-btn" type="button" disabled>End call</button>
@@ -50,6 +54,7 @@
             placeholder="Type a task — e.g. &quot;fix the failing test in calc.py&quot;"
           />
           <button id="send-btn" type="submit">Send</button>
+          <button id="cancel-btn" type="button" disabled>Stop</button>
         </form>
 
         <section id="timeline-panel">

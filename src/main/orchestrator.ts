@@ -117,11 +117,27 @@ async function rememberEvent(sessionId: string, e: ActionEvent): Promise<void> {
  * above the similarity floor, join their text. Returns undefined when memory is unavailable
  * or yields nothing (decide() treats memory as optional).
  */
-async function recallContext(query: string, sessionId: string): Promise<string | undefined> {
+async function recallContext(
+  query: string,
+  sessionId: string,
+  runId: string,
+): Promise<string | undefined> {
   try {
     const memory = await loadMemory();
     const matches = await memory.recall({ query, k: RECALL_K, sessionId });
     const kept = matches.filter((m) => m.similarity > RECALL_MIN_SIMILARITY);
+    // Visible Insforge beat: the pgvector recall emits no ActionEvent of its own,
+    // so surface it here as a message so the memory round-trip is legible on the
+    // timeline/captions (rides the existing message wiring; no frozen-union change).
+    pushEvent({
+      kind: 'message',
+      runId,
+      text:
+        kept.length > 0
+          ? `Insforge memory (pgvector): recalled ${kept.length} relevant ${kept.length === 1 ? 'item' : 'items'}`
+          : 'Insforge memory (pgvector): no prior context yet',
+      ts: Date.now(),
+    });
     if (kept.length === 0) return undefined;
     return kept.map((m) => m.text).join('\n');
   } catch (err) {
@@ -192,7 +208,7 @@ export async function runTurn(input: TurnInput): Promise<{ runId: string }> {
   const { transcript, sessionId } = input;
   const runId = newRunId();
 
-  const memory = await recallContext(transcript, sessionId);
+  const memory = await recallContext(transcript, sessionId, runId);
 
   let decision: Decision;
   try {
@@ -263,7 +279,7 @@ async function actOnDecision(
       // Loop back into decide() ONCE with the screen description, then re-dispatch.
       let next: Decision;
       try {
-        const recalled = await recallContext(transcript, sessionId);
+        const recalled = await recallContext(transcript, sessionId, runId);
         next = await decideStreaming({ transcript, memory: recalled, screen });
       } catch (err) {
         pushEvent({

@@ -14,6 +14,8 @@ interface CompanionBridgeLike {
   onActionEvent(cb: (e: ActionEvent) => void): () => void;
   onRunEnd?(cb: (p: { runId: string }) => void): () => void;
   turnRun?(input: TurnInput): Promise<{ runId: string }>;
+  /** Abort the most recent run when called with no id (orchestrator aborts the latest). */
+  cancelTask?(runId?: string): Promise<void>;
 }
 
 /** The slice of window.brain this component consumes. */

@@ -1,6 +1,6 @@
 :root {
   --bg: #0e1018;
-  --panel: rgba(20, 24, 36, 0.82);
+  --panel: rgba(20, 24, 36, 0.92);
   --panel-border: rgba(120, 130, 160, 0.18);
   --text: #e6e9f2;
   --muted: #9aa0b4;
@@ -66,6 +66,19 @@ body {
   letter-spacing: 0.3px;
 }
 
+/* Sponsor strip — names the prize tech permanently on screen (Nebius + Insforge). */
+#powered {
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+#powered b {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 #controls {
   display: flex;
   gap: 8px;
@@ -87,11 +100,17 @@ button:disabled {
   cursor: default;
 }
 
+/* Stop/cancel: distinct from the accent buttons so it reads as an abort. */
+#cancel-btn {
+  background: #ef5350;
+  color: #1a0b0b;
+}
+
 #status {
   align-self: center;
   margin-top: 4px;
   padding: 6px 12px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
   background: var(--panel);
   border: 1px solid var(--panel-border);
@@ -166,7 +185,7 @@ button:disabled {
 
 #timeline {
   overflow-y: auto;
-  font-size: 13px;
+  font-size: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -185,7 +204,7 @@ button:disabled {
 .tl-time {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .tl-kind {
@@ -194,9 +213,8 @@ button:disabled {
 
 .tl-detail {
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .status-completed .tl-kind {
