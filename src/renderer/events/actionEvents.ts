@@ -10,17 +10,24 @@
 
 import { eventToAvatarState } from '../../shared/avatar';
 import type { ActionEvent } from '../../shared/events';
-import type { CharacterDriver } from '../character/types';
+import type { CharacterDriver, CaptionSink } from '../character/types';
 import type { ActionTimeline } from '../character/captions';
 import { getCompanion, getBrain } from './bridge';
 
 export interface SubscribeOptions {
   character: CharacterDriver;
   timeline: ActionTimeline;
+  /**
+   * Optional captions sink. When present, the brain's narration ('message'
+   * events) and the agent's final summary ('run.completed' finalText) are shown
+   * as assistant caption lines — this is what makes the text-input turn readable
+   * on screen without a Vapi voice call.
+   */
+  captions?: CaptionSink;
 }
 
 export function subscribeActionEvents(opts: SubscribeOptions): () => void {
-  const { character, timeline } = opts;
+  const { character, timeline, captions } = opts;
   const unsubs: Array<() => void> = [];
 
   const companion = getCompanion();
@@ -31,6 +38,15 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
         // null => leave the avatar in its current state.
         if (next !== null) character.setState(next);
         timeline.append(e);
+        // Surface narration + final summary as assistant caption lines so the
+        // text-input turn is legible without Vapi TTS.
+        if (captions) {
+          if (e.kind === 'message' && e.text) {
+            captions.update('assistant', e.text, true);
+          } else if (e.kind === 'run.completed' && e.finalText) {
+            captions.update('assistant', e.finalText, true);
+          }
+        }
       }),
     );
   } else {

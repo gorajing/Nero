@@ -49,6 +49,7 @@ body {
 
 #overlay button,
 #overlay section,
+#overlay #prompt-form,
 #overlay #status {
   pointer-events: auto;
 }
@@ -115,6 +116,32 @@ button:disabled {
 .caption.partial {
   color: var(--muted);
   font-style: italic;
+}
+
+#prompt-form {
+  width: min(720px, 90vw);
+  margin: 0 auto 12px;
+  display: flex;
+  gap: 8px;
+}
+
+#prompt-input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+}
+
+#prompt-input::placeholder {
+  color: var(--muted);
+}
+
+#prompt-input:focus {
+  border-color: var(--accent);
 }
 
 #timeline-panel {

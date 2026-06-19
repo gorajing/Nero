@@ -14,6 +14,7 @@ import { sessionId } from './session';
 import { createCharacter } from './character/driver';
 import { CaptionPanel, ActionTimeline } from './character/captions';
 import { subscribeActionEvents } from './events/actionEvents';
+import { getCompanion } from './events/bridge';
 import { createVoice } from './voice';
 import type { VapiToolCall } from './voice/messages';
 
@@ -42,7 +43,7 @@ export async function bootstrap(): Promise<void> {
   // 3: captions + timeline + executor/brain subscriptions.
   const captions = new CaptionPanel();
   const timeline = new ActionTimeline();
-  subscribeActionEvents({ character: driver, timeline });
+  subscribeActionEvents({ character: driver, timeline, captions });
 
   // 4: voice.
   const onToolCalls = (list: VapiToolCall[]) => {
@@ -96,6 +97,42 @@ export async function bootstrap(): Promise<void> {
     const next = !voice.isMuted();
     voice.setMuted(next);
     if (muteBtn) muteBtn.textContent = next ? 'Unmute' : 'Mute';
+  });
+
+  // Text-input path: feed a typed task straight to MAIN's orchestrator
+  // (turnRun -> recall[Insforge] -> decide[Nebius] -> executor[Codex]). No mic,
+  // no Vapi call. ActionEvents stream back over the same subscribeActionEvents
+  // wiring that drives the avatar, captions, and timeline.
+  const promptForm = el<HTMLFormElement>('prompt-form');
+  const promptInput = el<HTMLInputElement>('prompt-input');
+  const sendBtn = el<HTMLButtonElement>('send-btn');
+
+  promptForm?.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const text = promptInput?.value.trim() ?? '';
+    if (!text) return;
+
+    const companion = getCompanion();
+    if (!companion?.turnRun) {
+      setStatus('Orchestrator unavailable (window.companion.turnRun missing).');
+      return;
+    }
+
+    if (promptInput) promptInput.value = '';
+    if (sendBtn) sendBtn.disabled = true;
+    captions.update('user', text, true);
+    driver.setState('thinking');
+    setStatus('Thinking…');
+
+    try {
+      const { runId } = await companion.turnRun({ transcript: text, sessionId });
+      setStatus(`Working… (${runId})`);
+    } catch (e) {
+      driver.setState('error');
+      setStatus(`Turn failed: ${describeError(e)}`);
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
   });
 
   // Expose a tiny dev handle for manual testing in DevTools (drive the avatar
