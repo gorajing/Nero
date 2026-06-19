@@ -65,7 +65,7 @@ Grant **Microphone** + **Screen Recording** to the launching binary; **relaunch*
 ```
 npm start
 ```
-Summon (Cmd+Shift+Space) → click **Start** (mic-gesture gate) → speak a task → the character thinks (Nebius `reasoning_content`) → drives Codex in `COMPANION_WORKDIR` (each action narrated + animated) → writes to Insforge memory. Then ask *"what did we do?"* for the pgvector recall beat.
+Summon (Cmd+Shift+Space) → click **Start** in the full UI, or click **Nero** once in floating mode (mic-gesture gate) → speak a task → the character thinks (Nebius `reasoning_content`) → drives Codex in `COMPANION_WORKDIR` (each action narrated + animated) → writes to Insforge memory. Then ask *"what did we do?"* for the pgvector recall beat.
 
 ### Optional floating character window
 
@@ -76,9 +76,10 @@ COMPANION_FLOATING_WINDOW=1 npm start
 ```
 
 This keeps the normal window as the default. The opt-in mode shrinks the
-Electron window, removes the frame, makes the background transparent, and hides
-every overlay panel so the only visible surface is the cat. Use the normal app
-window for controls and debugging.
+Electron window, removes the frame, makes the background transparent, hides every
+overlay panel so the only visible surface is the cat, and keeps Nero above normal
+windows across macOS Spaces/full-screen apps. Click Nero once to start the voice
+session. Use the normal app window for controls and debugging.
 
 ## Proven vs. needs-your-machine
 - **✅ Proven headlessly:** all 8 modules type-check together (0 src errors); executor live-verified vs real codex 0.139.0; renderer Vite build OK (500 modules); brain/memory/vision/proxy code-complete + scoped-clean.

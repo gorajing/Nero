@@ -97,8 +97,10 @@ COMPANION_FLOATING_WINDOW=1 npm start
 ```
 
 The floating mode opens a transparent, frameless 420x460 window that hides all
-controls and shows only the cat. Use the normal app window when you need the
-input box, call controls, captions, and action timeline.
+controls and shows only the cat. Click Nero once to start the voice session.
+The floating window stays above normal windows and across macOS Spaces,
+including full-screen apps. Use the normal app window when you need the input
+box, call controls, captions, and action timeline.
 
 Nero currently keeps the `COMPANION_*` environment-variable prefix because those
 names are part of the existing IPC/config surface.

@@ -70,25 +70,48 @@ export async function bootstrap(): Promise<void> {
   const stopBtn = el<HTMLButtonElement>('stop-btn');
   const muteBtn = el<HTMLButtonElement>('mute-btn');
 
-  startBtn?.addEventListener('click', async () => {
+  let callActive = false;
+  let callStarting = false;
+
+  const startVoiceCall = async () => {
+    if (callActive || callStarting) return;
     if (!config.vapiPublicKey) {
       setStatus('Set window.COMPANION_CFG.vapiPublicKey (or VITE_VAPI_PUBLIC_KEY) to start a call.');
       return;
     }
+    callStarting = true;
     try {
       setStatus('Starting call…');
       await voice.startCompanionCall();
+      callActive = true;
       setStatus('Call active. Speak to Nero.');
       if (startBtn) startBtn.disabled = true;
       if (stopBtn) stopBtn.disabled = false;
       if (muteBtn) muteBtn.disabled = false;
     } catch (e) {
       setStatus(`Could not start call: ${describeError(e)}`);
+    } finally {
+      callStarting = false;
     }
+  };
+
+  startBtn?.addEventListener('click', () => {
+    void startVoiceCall();
   });
+
+  if (config.floatingWindow) {
+    canvas.setAttribute('role', 'button');
+    canvas.setAttribute('aria-label', 'Start talking to Nero');
+    canvas.title = 'Click to talk to Nero';
+    canvas.style.cursor = 'pointer';
+    canvas.addEventListener('click', () => {
+      void startVoiceCall();
+    });
+  }
 
   stopBtn?.addEventListener('click', () => {
     voice.endCall();
+    callActive = false;
     setStatus('Call ended.');
     if (startBtn) startBtn.disabled = false;
     if (stopBtn) stopBtn.disabled = true;

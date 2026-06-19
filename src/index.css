@@ -38,6 +38,12 @@ body.floating-window {
   -webkit-app-region: drag;
 }
 
+body.floating-window #live2d-canvas {
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+  cursor: pointer !important;
+}
+
 html.floating-window #app,
 html.floating-window #live2d-canvas {
   background: transparent;

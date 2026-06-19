@@ -25,12 +25,16 @@ export function createWindow(): BrowserWindow {
   };
 
   const mainWindow = new BrowserWindow({
+    title: 'Nero',
     width: FLOATING_WINDOW_FLAG ? 420 : 1024,
     height: FLOATING_WINDOW_FLAG ? 460 : 768,
     frame: !FLOATING_WINDOW_FLAG,
     transparent: FLOATING_WINDOW_FLAG,
     backgroundColor: FLOATING_WINDOW_FLAG ? '#00000000' : '#0e1018',
     hasShadow: !FLOATING_WINDOW_FLAG,
+    acceptFirstMouse: FLOATING_WINDOW_FLAG,
+    alwaysOnTop: FLOATING_WINDOW_FLAG,
+    fullscreenable: !FLOATING_WINDOW_FLAG,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // compiled name is .js
       contextIsolation: true,
@@ -39,6 +43,12 @@ export function createWindow(): BrowserWindow {
       additionalArguments: ['--companion-cfg=' + JSON.stringify(companionCfg)],
     },
   });
+
+  if (FLOATING_WINDOW_FLAG) {
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    mainWindow.setFullScreenable(false);
+  }
 
   // Keep the template's MAIN_WINDOW_VITE_* loading logic (dev server vs packaged file).
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -63,8 +73,12 @@ export function registerSummonShortcut(): void {
     if (win.isVisible() && win.isFocused()) {
       win.hide();
     } else {
-      win.show();
-      win.focus();
+      if (FLOATING_WINDOW_FLAG) {
+        win.showInactive();
+      } else {
+        win.show();
+        win.focus();
+      }
     }
   });
   if (!ok) {
