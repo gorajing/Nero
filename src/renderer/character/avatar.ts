@@ -78,12 +78,15 @@ async function loadLive2D(): Promise<Live2DModule | null> {
   }
 }
 
+function isFloatingWindow(): boolean {
+  return typeof document !== 'undefined' && document.body.classList.contains('floating-window');
+}
+
 function buildPlaceholder(app: PIXI.Application): Placeholder {
   const container = new PIXI.Container();
   container.sortableChildren = true;
 
   let state: AvatarState = 'idle';
-  let tint = 0x8a8aff;
   let mouthOpen = 0;
   let talking = false;
   let blinkUntil = 0;
@@ -93,27 +96,14 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   const GRID_W = 18;
   const GRID_H = 17;
   const CAT = {
-    rim: 0x2b2d48,
-    black: 0x191a2f,
-    blackShade: 0x0b0c18,
-    white: 0xf4f2ec,
-    whiteShade: 0xd8d6cf,
-    eye: 0xffdd19,
-    gray: 0x555a59,
-    mouth: 0xff6b8a,
-    shadow: 0x000000,
+    black: 0x171821,
+    white: 0xf4f0e8,
+    eye: 0xffd61e,
+    ear: 0x70736e,
   } as const;
 
   const aura = new PIXI.Graphics();
   aura.zIndex = 0;
-
-  const shadow = new PIXI.Graphics();
-  shadow.beginFill(CAT.shadow, 0.22);
-  shadow.drawRect(-80, 108, 56, 12);
-  shadow.drawRect(-8, 108, 104, 12);
-  shadow.drawRect(-64, 120, 128, 8);
-  shadow.endFill();
-  shadow.zIndex = 1;
 
   const body = new PIXI.Container();
   body.zIndex = 2;
@@ -131,119 +121,162 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     g.endFill();
   };
 
-  const drawTail = (tick = 0) => {
+  type CatAction = 'standing' | 'sitting' | 'walking';
+
+  const actionForTick = (tick = 0): CatAction => {
+    if (state === 'working') return 'walking';
+    if (state === 'thinking') return 'sitting';
+    if (state === 'idle' && isFloatingWindow()) {
+      const cycle = Math.floor(tick / 240) % 3;
+      if (cycle === 1) return 'sitting';
+      if (cycle === 2) return 'walking';
+      return 'standing';
+    }
+    return 'standing';
+  };
+
+  const stepFrame = (tick = 0) => Math.floor(tick / 12) % 4;
+
+  const walkOffset = (tick = 0) => Math.round(Math.sin(tick / 34) * 30);
+
+  const walkDirection = (tick = 0) => (Math.cos(tick / 34) >= 0 ? 1 : -1);
+
+  const headOriginForAction = (action: CatAction) => {
+    if (action === 'walking') return { x: 8, y: 4 };
+    if (action === 'sitting') return { x: 7, y: 4 };
+    return { x: 8, y: 4 };
+  };
+
+  const faceForAction = (action: CatAction) => {
+    const head = headOriginForAction(action);
+    return {
+      eyeLeft: head.x + 3,
+      eyeRight: head.x + 6,
+      eyeY: head.y + 3,
+      mouthX: head.x + 4,
+      mouthY: head.y + 4,
+    };
+  };
+
+  const drawTail = (tick = 0, action = actionForTick(tick)) => {
     tail.clear();
-    const wag = Math.floor(tick / 28) % 2;
+    const wag = Math.floor(tick / 24) % 2;
 
     if (state === 'error') {
-      px(tail, 2, 8, 2, 4, CAT.rim, 0.5);
-      px(tail, 4, 11, 2, 2, CAT.rim, 0.5);
-      px(tail, 3, 8, 1, 4, CAT.black);
-      px(tail, 4, 11, 1, 1, CAT.black);
-      px(tail, 5, 12, 1, 1, CAT.black);
+      px(tail, 4, 8, 1, 5, CAT.black);
+      px(tail, 5, 11, 1, 2, CAT.black);
       return;
     }
 
-    px(tail, 2, 7, 2, 4, CAT.rim, 0.5);
-    px(tail, 3, 6, 2, 1, CAT.rim, 0.5);
-    px(tail, 4, 11, 3, 2, CAT.rim, 0.5);
-    px(tail, 3, 7, 1, 4, CAT.black);
-    px(tail, 4, 6, 1, 1, CAT.black);
-    px(tail, 4, 11, 1, 1, CAT.black);
-    px(tail, 5, 12, 2, 1, CAT.black);
-
-    if (state === 'listening' || talking) {
-      px(tail, 4, 5 + wag, 1, 1, CAT.black);
-    } else if (state === 'thinking') {
-      px(tail, 2 + wag, 6, 1, 1, CAT.black);
-    } else if (state === 'done') {
-      px(tail, 5, 5, 1, 1, CAT.black);
+    if (action === 'sitting') {
+      px(tail, 5, 9, 1, 5, CAT.black);
+      px(tail, 5, 12, 2, 1, CAT.black);
+      px(tail, 4, 14, 3, 1, CAT.black);
+      return;
     }
+
+    px(tail, 3, 7, 1, 6, CAT.black);
+    px(tail, 2, 4, 1, 4, CAT.black);
+    px(tail, 2, 4, 2, 1, CAT.black);
+    px(tail, 4, 11, 2, 1, CAT.black);
+    px(tail, 4, 12, 2, 1, CAT.black);
+    px(tail, 3 + wag, 4, 1, 1, CAT.black);
   };
 
-  const drawCat = () => {
+  const drawCat = (tick = 0, action = actionForTick(tick)) => {
     cat.clear();
 
     const earsFlat = state === 'error';
     const earsPerked = state === 'listening' || talking;
     const earTop = earsPerked ? 2 : 3;
+    const earTwitch = state === 'idle' && Math.floor(tick / 70) % 6 === 1;
+    const leftEarTop = earTop - (earTwitch ? 1 : 0);
+    const rightEarTop = earTop - (!earTwitch && state === 'idle' && Math.floor(tick / 90) % 7 === 2 ? 1 : 0);
 
-    px(cat, 4, 10, 8, 5, CAT.rim, 0.52);
-    px(cat, 7, 9, 4, 1, CAT.rim, 0.52);
-    px(cat, 9, 8, 5, 6, CAT.rim, 0.52);
-    px(cat, 7, 4, 8, 6, CAT.rim, 0.52);
-    px(cat, 6, 6, 10, 3, CAT.rim, 0.52);
+    const drawHead = (action: CatAction) => {
+      const { x, y } = headOriginForAction(action);
+      px(cat, x + 1, y + 1, 7, 1, CAT.black);
+      px(cat, x + 1, y + 2, 7, 4, CAT.black);
+      px(cat, x, y + 3, 1, 2, CAT.black);
+      px(cat, x + 8, y + 3, 1, 2, CAT.black);
 
-    px(cat, 5, 11, 6, 3, CAT.black);
-    px(cat, 7, 10, 3, 1, CAT.black);
-    px(cat, 10, 9, 3, 4, CAT.white);
-    px(cat, 11, 12, 2, 2, CAT.white);
-    px(cat, 9, 13, 1, 1, CAT.white);
-    px(cat, 13, 13, 1, 1, CAT.white);
-    px(cat, 12, 11, 1, 1, CAT.black);
-    px(cat, 5, 13, 4, 1, CAT.blackShade, 0.7);
+      if (earsFlat) {
+        px(cat, x + 1, y + 1, 3, 1, CAT.black);
+        px(cat, x + 5, y + 1, 3, 1, CAT.black);
+      } else {
+        px(cat, x + 1, leftEarTop, 2, 3, CAT.black);
+        px(cat, x + 6, rightEarTop, 2, 3, CAT.black);
+        px(cat, x + 2, leftEarTop + 1, 1, 1, CAT.ear);
+        px(cat, x + 6, rightEarTop + 1, 1, 1, CAT.ear);
+      }
+    };
 
-    px(cat, 8, 5, 6, 4, CAT.black);
-    px(cat, 7, 6, 1, 1, CAT.black);
-    px(cat, 14, 6, 1, 1, CAT.black);
-    px(cat, 7, 8, 2, 1, CAT.black);
+    const drawToe = (x: number, y: number) => {
+      px(cat, x, y, 1, 1, CAT.white);
+    };
 
-    if (earsFlat) {
-      px(cat, 7, 4, 2, 1, CAT.black);
-      px(cat, 13, 4, 2, 1, CAT.black);
-      px(cat, 8, 4, 1, 1, CAT.gray);
-      px(cat, 13, 4, 1, 1, CAT.gray);
+    if (action === 'sitting') {
+      px(cat, 7, 9, 5, 6, CAT.black);
+      px(cat, 6, 11, 7, 4, CAT.black);
+      px(cat, 8, 8, 4, 1, CAT.black);
+      px(cat, 10, 10, 2, 5, CAT.white);
+      px(cat, 8, 14, 1, 2, CAT.black);
+      px(cat, 11, 14, 1, 2, CAT.black);
+      drawToe(8, 15);
+      drawToe(11, 15);
+      drawHead(action);
+    } else if (action === 'walking') {
+      const frame = stepFrame(tick);
+      const frontLeg = frame === 0 || frame === 3 ? 1 : 0;
+      const rearLeg = frame === 1 || frame === 2 ? 1 : 0;
+
+      px(cat, 4, 10, 9, 4, CAT.black);
+      px(cat, 6, 9, 5, 1, CAT.black);
+      px(cat, 10, 10, 3, 4, CAT.white);
+      px(cat, 5, 14, 1, 2 + rearLeg, CAT.black);
+      px(cat, 8, 14, 1, 2 + frontLeg, CAT.black);
+      px(cat, 11, 14, 1, 2 + rearLeg, CAT.black);
+      px(cat, 13, 14, 1, 2 + frontLeg, CAT.black);
+      drawToe(5, 15 + rearLeg);
+      drawToe(8, 15 + frontLeg);
+      drawToe(11, 15 + rearLeg);
+      drawToe(13, 15 + frontLeg);
+      drawHead(action);
     } else {
-      px(cat, 7, earTop, 3, 3, CAT.rim, 0.52);
-      px(cat, 12, earTop, 3, 3, CAT.rim, 0.52);
-      px(cat, 8, earTop, 1, 2, CAT.black);
-      px(cat, 9, earTop + 1, 1, 1, CAT.black);
-      px(cat, 13, earTop, 1, 2, CAT.black);
-      px(cat, 12, earTop + 1, 1, 1, CAT.black);
-      px(cat, 8, earTop + 1, 1, 1, CAT.gray);
-      px(cat, 13, earTop + 1, 1, 1, CAT.gray);
-    }
-
-    px(cat, 6, 6, 1, 1, CAT.black);
-    px(cat, 5, 5, 1, 1, CAT.black);
-    px(cat, 6, 8, 1, 1, CAT.black);
-    px(cat, 15, 6, 1, 1, CAT.black);
-    px(cat, 16, 5, 1, 1, CAT.black);
-    px(cat, 15, 8, 1, 1, CAT.black);
-
-    if (state === 'working') {
-      px(cat, 8, 9, 6, 1, tint, 0.2);
+      px(cat, 5, 10, 8, 4, CAT.black);
+      px(cat, 6, 9, 5, 1, CAT.black);
+      px(cat, 10, 10, 3, 4, CAT.white);
+      px(cat, 6, 14, 1, 2, CAT.black);
+      px(cat, 8, 14, 1, 2, CAT.black);
+      px(cat, 11, 14, 1, 2, CAT.black);
+      px(cat, 13, 14, 1, 2, CAT.black);
+      drawToe(6, 15);
+      drawToe(8, 15);
+      drawToe(11, 15);
+      drawToe(13, 15);
+      drawHead(action);
     }
   };
 
-  const redrawFace = () => {
+  const redrawFace = (tick = 0, action = actionForTick(tick)) => {
     const blink = performance.now() < blinkUntil;
-    const eyeColor = state === 'error' ? 0xef5350 : CAT.eye;
-    const lookX = state === 'working' ? 1 : state === 'thinking' ? -1 : 0;
+    const eyeColor = CAT.eye;
+    const lookX = state === 'thinking' ? -1 : 0;
     const lookY = state === 'thinking' ? -1 : 0;
+    const face = faceForAction(action);
 
     eyes.clear();
-    if (blink) {
-      px(eyes, 10, 7, 1, 1, CAT.gray);
-      px(eyes, 13, 7, 1, 1, CAT.gray);
-    } else {
-      px(eyes, 10 + lookX, 6 + lookY, 1, 1, eyeColor);
-      px(eyes, 13 + lookX, 6 + lookY, 1, 1, eyeColor);
-      if (state === 'done') {
-        px(eyes, 11, 6, 1, 1, CAT.eye);
-        px(eyes, 14, 6, 1, 1, CAT.eye);
-      }
+    mouth.clear();
+    if (!blink) {
+      px(eyes, face.eyeLeft + lookX, face.eyeY + lookY, 1, 1, eyeColor);
+      px(eyes, face.eyeRight + lookX, face.eyeY + lookY, 1, 1, eyeColor);
     }
 
-    mouth.clear();
-    if (state === 'done' && !talking) {
-      px(mouth, 11, 8, 1, 1, CAT.whiteShade);
-      px(mouth, 12, 8, 1, 1, CAT.whiteShade);
-    } else if (state === 'error') {
-      px(mouth, 11, 8, 2, 1, 0xef5350);
+    if (state === 'error') {
+      px(mouth, face.mouthX, face.mouthY, 2, 1, CAT.white);
     } else if (talking || mouthOpen > 0.16) {
-      px(mouth, 11, 8, 1, 1, CAT.mouth);
-      if (mouthOpen > 0.48 || talking) px(mouth, 12, 8, 1, 1, CAT.mouth);
+      px(mouth, face.mouthX, face.mouthY, 1, 1, CAT.white);
+      if (mouthOpen > 0.48 || talking) px(mouth, face.mouthX + 1, face.mouthY, 1, 1, CAT.white);
     }
   };
 
@@ -251,20 +284,28 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     aura.clear();
     const blink = Math.floor(tick / 18) % 2;
     if (state === 'thinking') {
-      px(aura, 10, 1, 1, 1, 0xffd166, 0.8);
-      px(aura, 12, 0, 1, 1, 0xffd166, 0.65 + blink * 0.25);
-      px(aura, 13, 1, 1, 1, 0xffd166, 0.5);
+      px(aura, 10, 1, 1, 1, CAT.eye);
+      if (blink) px(aura, 12, 0, 1, 1, CAT.eye);
+      px(aura, 13, 1, 1, 1, CAT.eye);
     }
     if (state === 'done') {
-      px(aura, 5, 3, 1, 1, 0xffffff, 0.65 + blink * 0.25);
-      px(aura, 4, 4, 1, 1, tint, 0.75);
-      px(aura, 15, 4, 1, 1, 0xffffff, 0.7);
-      px(aura, 16, 5, 1, 1, tint, 0.65 + blink * 0.2);
-      px(aura, 14, 10, 1, 1, 0xffffff, 0.6);
+      px(aura, 5, 3, 1, 1, CAT.white);
+      if (blink) px(aura, 4, 4, 1, 1, CAT.eye);
+      px(aura, 15, 4, 1, 1, CAT.white);
+      if (blink) px(aura, 16, 5, 1, 1, CAT.eye);
+      px(aura, 14, 10, 1, 1, CAT.white);
+      // An unmistakable green check above the head so 'done' reads clearly even in
+      // floating mode (where the timeline/caption are hidden and a standing cat
+      // otherwise looks identical to idle).
+      const DONE_GREEN = 0x5ad17a;
+      px(aura, 8, 1, 1, 1, DONE_GREEN);
+      px(aura, 9, 2, 1, 1, DONE_GREEN);
+      px(aura, 10, 1, 1, 1, DONE_GREEN);
+      px(aura, 11, 0, 1, 1, DONE_GREEN);
     }
     if (state === 'error') {
-      px(aura, 6, 3, 1, 1, 0xef5350, 0.8);
-      px(aura, 15, 3, 1, 1, 0xef5350, 0.55 + blink * 0.25);
+      px(aura, 6, 3, 1, 1, CAT.eye);
+      if (blink) px(aura, 15, 3, 1, 1, CAT.eye);
     }
   };
 
@@ -272,19 +313,13 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     signal.clear();
     foreground.clear();
 
-    if (state === 'working') {
-      const scanY = 5 + (Math.floor(tick / 9) % 4);
-      px(foreground, 8, scanY, 7, 1, 0x29b6f6, 0.36);
-    }
-
     if (talking || state === 'listening') {
       const frame = Math.floor(tick / 16) % 3;
-      const alpha = talking ? 0.9 : 0.52;
-      px(signal, 15, 5, 1, 1, tint, alpha);
-      px(signal, 16, 4, 1, 1, tint, frame > 0 ? alpha : 0.18);
-      px(signal, 16, 7, 1, 1, tint, frame > 1 ? alpha : 0.18);
-      px(signal, 6, 5, 1, 1, tint, alpha * 0.72);
-      px(signal, 5, 4, 1, 1, tint, frame > 0 ? alpha * 0.72 : 0.16);
+      px(signal, 15, 5, 1, 1, CAT.eye);
+      if (frame > 0) px(signal, 16, 4, 1, 1, CAT.eye);
+      if (frame > 1) px(signal, 16, 7, 1, 1, CAT.eye);
+      px(signal, 6, 5, 1, 1, CAT.white);
+      if (frame > 0) px(signal, 5, 4, 1, 1, CAT.white);
     }
   };
 
@@ -297,19 +332,31 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   });
   label.anchor.set(0.5, 0);
   label.position.set(0, 142);
+  const refreshLabelVisibility = () => {
+    label.visible = !isFloatingWindow();
+  };
+  refreshLabelVisibility();
 
   body.addChild(tail, cat, eyes, mouth, foreground, signal);
-  container.addChild(aura, shadow, body, label);
+  container.addChild(aura, body, label);
   app.stage.addChild(container);
 
   let lastFitWidth = 0;
   let lastFitHeight = 0;
+  const positionContainer = () => {
+    const width = app.screen.width;
+    const height = app.screen.height;
+    const floating = isFloatingWindow();
+    container.position.set(width / 2, height / 2 - (floating ? 8 : 16));
+  };
+
   const fit = () => {
     const width = app.screen.width;
     const height = app.screen.height;
-    const scale = Math.min(1.35, Math.max(0.72, Math.min(width / 380, height / 390)));
+    const baseScale = Math.min(1.35, Math.max(0.72, Math.min(width / 380, height / 390)));
+    const scale = isFloatingWindow() ? baseScale * 0.76 : baseScale;
     container.scale.set(scale);
-    container.position.set(width / 2, height / 2 - 16);
+    positionContainer();
     lastFitWidth = width;
     lastFitHeight = height;
   };
@@ -323,6 +370,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
 
   app.ticker.add(() => {
     if (app.screen.width !== lastFitWidth || app.screen.height !== lastFitHeight) fit();
+    refreshLabelVisibility();
 
     const now = performance.now();
     if (now > nextBlink) {
@@ -330,20 +378,23 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       nextBlink = now + 1600 + Math.random() * 2200;
     }
     const tick = app.ticker.lastTime / 16.67;
-    const breathe = Math.round(Math.sin(tick / 34) * 2) * 2;
+    const action = actionForTick(tick);
+    positionContainer();
+    const breathe = action === 'walking' ? Math.round(Math.abs(Math.sin(tick / 12)) * -2) * 2 : Math.round(Math.sin(tick / 34) * 2) * 2;
     const focusLift = state === 'working' ? -6 : state === 'thinking' ? -4 : state === 'error' ? 4 : 0;
+    body.scale.x = action === 'walking' ? walkDirection(tick) : 1;
+    body.position.x = action === 'walking' ? walkOffset(tick) : 0;
     body.position.y = breathe + focusLift;
-    shadow.scale.set(1 + Math.sin(tick / 34) * 0.03, 1);
-    drawTail(tick);
-    drawCat();
-    redrawFace();
+    drawTail(tick, action);
+    drawCat(tick, action);
+    redrawFace(tick, action);
     redrawAura(tick);
     redrawSignal(tick);
   }, undefined, PIXI.UPDATE_PRIORITY.LOW);
 
   const applyState = (nextState: AvatarState, color: number) => {
+    void color;
     state = nextState;
-    tint = color;
     drawCat();
     redrawFace();
     redrawAura();
@@ -357,11 +408,12 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     mouth,
     label,
     setTint: (color: number) => {
-      tint = color;
+      void color;
       redrawSignal();
     },
     setLabel: (text: string) => {
       label.text = text;
+      refreshLabelVisibility();
     },
     setState: applyState,
     setMouthOpen: (v: number) => {

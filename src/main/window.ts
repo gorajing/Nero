@@ -8,6 +8,7 @@ import { BrowserWindow, globalShortcut } from 'electron';
 import path from 'node:path';
 
 const SUMMON_ACCELERATOR = 'CommandOrControl+Shift+Space';
+const FLOATING_WINDOW_FLAG = process.env.COMPANION_FLOATING_WINDOW === '1';
 
 export function createWindow(): BrowserWindow {
   // Renderer-safe runtime config, sourced from MAIN's process.env (populated by
@@ -20,11 +21,16 @@ export function createWindow(): BrowserWindow {
     customLlmUrl: process.env.VAPI_PROXY_URL ?? 'http://127.0.0.1:8787',
     customLlmModel: process.env.NEBIUS_MODEL ?? 'deepseek-ai/DeepSeek-V3.2',
     modelUrl: process.env.LIVE2D_MODEL_URL ?? '/live2d/model.model3.json',
+    floatingWindow: FLOATING_WINDOW_FLAG,
   };
 
   const mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: FLOATING_WINDOW_FLAG ? 420 : 1024,
+    height: FLOATING_WINDOW_FLAG ? 460 : 768,
+    frame: !FLOATING_WINDOW_FLAG,
+    transparent: FLOATING_WINDOW_FLAG,
+    backgroundColor: FLOATING_WINDOW_FLAG ? '#00000000' : '#0e1018',
+    hasShadow: !FLOATING_WINDOW_FLAG,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // compiled name is .js
       contextIsolation: true,

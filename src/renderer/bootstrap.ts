@@ -29,6 +29,8 @@ function setStatus(text: string): void {
 
 export async function bootstrap(): Promise<void> {
   const config = loadConfig();
+  document.documentElement.classList.toggle('floating-window', config.floatingWindow);
+  document.body.classList.toggle('floating-window', config.floatingWindow);
 
   const canvas = el<HTMLCanvasElement>('live2d-canvas');
   if (!canvas) {

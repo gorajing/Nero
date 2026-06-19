@@ -28,6 +28,21 @@ body {
   height: 100vh;
 }
 
+html.floating-window,
+body.floating-window {
+  background: transparent;
+}
+
+body.floating-window {
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+html.floating-window #app,
+html.floating-window #live2d-canvas {
+  background: transparent;
+}
+
 /* The Live2D / placeholder canvas fills the window and sits behind the UI. */
 #live2d-canvas {
   position: absolute;
@@ -47,6 +62,10 @@ body {
   pointer-events: none; /* let clicks fall through except on interactive bits */
 }
 
+body.floating-window #overlay {
+  display: none;
+}
+
 #overlay button,
 #overlay section,
 #overlay #prompt-form,
@@ -62,12 +81,16 @@ body {
 }
 
 #brand {
+  flex: 0 0 auto;
   font-weight: 700;
   letter-spacing: 0.3px;
 }
 
 /* Sponsor strip — names the prize tech permanently on screen (Nebius + Insforge). */
 #powered {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 14px;
   color: var(--muted);
   letter-spacing: 0.2px;
@@ -80,6 +103,7 @@ body {
 }
 
 #controls {
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
 }
@@ -145,6 +169,7 @@ button:disabled {
 }
 
 #prompt-input {
+  min-width: 0;
   flex: 1;
   background: var(--panel);
   border: 1px solid var(--panel-border);

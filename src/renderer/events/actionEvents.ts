@@ -13,6 +13,7 @@ import type { ActionEvent } from '../../shared/events';
 import type { CharacterDriver, CaptionSink } from '../character/types';
 import type { ActionTimeline } from '../character/captions';
 import { getCompanion, getBrain } from './bridge';
+import { runState } from './runState';
 
 export interface SubscribeOptions {
   character: CharacterDriver;
@@ -38,6 +39,11 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
   if (companion?.onActionEvent) {
     unsubs.push(
       companion.onActionEvent((e: ActionEvent) => {
+        // Track executor run activity (see runState): keeps a voice/Daily error
+        // from clobbering the avatar mid-run, and lets the avatar settle to idle
+        // when the run ends.
+        if (e.kind === 'run.started') runState.set(true);
+        else if (e.kind === 'run.completed' || e.kind === 'run.failed') runState.set(false);
         const next = eventToAvatarState(e);
         // null => leave the avatar in its current state.
         if (next !== null) character.setState(next);
@@ -62,10 +68,16 @@ export function subscribeActionEvents(opts: SubscribeOptions): () => void {
   if (companion?.onRunEnd) {
     unsubs.push(
       companion.onRunEnd(({ runId }) => {
+        runState.set(false);
         timeline.marker(`— run ended: ${runId} —`);
-        // Settle back to listening if a call is up, else idle. The state machine
-        // is idempotent, so a redundant set is harmless. We pick 'idle' here and
-        // let Voice's speech/listening transitions take over if a call is active.
+        // Let the 'done'/'error' cue read for a beat, then settle the avatar back
+        // to idle so a finished run doesn't leave the cat parked (in floating mode
+        // 'done' otherwise looks like idle forever). Skipped if a new run started.
+        setTimeout(() => {
+          if (!runState.active && (character.state === 'done' || character.state === 'error')) {
+            character.setState('idle');
+          }
+        }, 2500);
       }),
     );
   }

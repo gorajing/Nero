@@ -21,6 +21,7 @@ import type Vapi from '@vapi-ai/web';
 import type { CharacterDriver, CaptionSink } from '../character/types';
 import { type VapiMessage, isTranscript, isToolCalls, type VapiToolCall } from './messages';
 import { getCompanion } from '../events/bridge';
+import { runState } from '../events/runState';
 
 export interface WireOptions {
   character: CharacterDriver;
@@ -76,7 +77,10 @@ export function wireVapiEvents(vapi: Vapi, opts: WireOptions): void {
 
   vapi.on('error', (e: unknown) => {
     console.error('[vapi] error', describeVapiError(e));
-    character.setState('error');
+    // Don't let a voice/Daily error (e.g. "Meeting has ended") clobber the avatar
+    // while an executor run is in flight — the coding run owns the avatar state.
+    // The error is still surfaced via onError (the status banner).
+    if (!runState.active) character.setState('error');
     onError?.(e);
   });
 }
