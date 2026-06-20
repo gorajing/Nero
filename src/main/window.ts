@@ -6,8 +6,10 @@
 // typed via forge.env.d.ts — do NOT redeclare them.
 import { BrowserWindow, globalShortcut } from 'electron';
 import path from 'node:path';
+import { CH } from '../shared/ipc';
 
 const SUMMON_ACCELERATOR = 'CommandOrControl+Shift+Space';
+const MUTE_ACCELERATOR = 'CommandOrControl+Shift+M';
 const FLOATING_WINDOW_FLAG = process.env.COMPANION_FLOATING_WINDOW === '1';
 
 export function createWindow(): BrowserWindow {
@@ -67,7 +69,7 @@ export function createWindow(): BrowserWindow {
  * if the accelerator is already taken — we log loud on failure. Call after whenReady.
  */
 export function registerSummonShortcut(): void {
-  const ok = globalShortcut.register(SUMMON_ACCELERATOR, () => {
+  const summonOk = globalShortcut.register(SUMMON_ACCELERATOR, () => {
     const win = BrowserWindow.getAllWindows()[0];
     if (!win) return;
     if (win.isVisible() && win.isFocused()) {
@@ -81,9 +83,20 @@ export function registerSummonShortcut(): void {
       }
     }
   });
-  if (!ok) {
+  if (!summonOk) {
     console.error(
       `[main] globalShortcut '${SUMMON_ACCELERATOR}' registration failed (already taken)`,
+    );
+  }
+
+  const muteOk = globalShortcut.register(MUTE_ACCELERATOR, () => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(CH.micToggleMute);
+    }
+  });
+  if (!muteOk) {
+    console.error(
+      `[main] globalShortcut '${MUTE_ACCELERATOR}' registration failed (already taken)`,
     );
   }
 }

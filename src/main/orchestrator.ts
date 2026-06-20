@@ -75,6 +75,12 @@ function notifyJobDone(ok: boolean, detail?: string): void {
   }
 }
 
+function terminalEventText(e: ActionEvent): string | undefined {
+  if (e.kind === 'run.completed') return e.finalText;
+  if (e.kind === 'run.failed') return e.error;
+  return undefined;
+}
+
 /** Map a canonical event to the memory kind we persist it under. */
 function memoryKind(e: ActionEvent): MemoryKind {
   switch (e.kind) {
@@ -191,6 +197,7 @@ async function dispatchExecutor(
   agent: AgentKind,
 ): Promise<void> {
   const controller = new AbortController();
+  let terminalSeen = false;
   activeRuns.set(runId, controller);
   try {
     const executor = getExecutor(agent);
@@ -203,10 +210,24 @@ async function dispatchExecutor(
       pushEvent(ev);
       // Native "job done" notification on terminal events — visible even when the
       // window is hidden or in floating mode.
-      if (ev.kind === 'run.completed') notifyJobDone(true, ev.finalText);
-      else if (ev.kind === 'run.failed') notifyJobDone(false, ev.error);
+      if (ev.kind === 'run.completed' || ev.kind === 'run.failed') {
+        terminalSeen = true;
+        notifyJobDone(ev.kind === 'run.completed', terminalEventText(ev));
+      }
       // Fire-and-forget memory persistence so it never stalls the event stream.
       void rememberEvent(sessionId, ev);
+    }
+    if (!terminalSeen && !controller.signal.aborted) {
+      const completed: ActionEvent = {
+        kind: 'run.completed',
+        runId,
+        ok: true,
+        finalText: 'The coding agent finished.',
+        ts: Date.now(),
+      };
+      pushEvent(completed);
+      notifyJobDone(true, completed.finalText);
+      void rememberEvent(sessionId, completed);
     }
   } catch (err) {
     // The executors normally translate failures into a run.failed event, but guard the
@@ -303,7 +324,7 @@ async function actOnDecision(
       let screen: string;
       try {
         const [vision, brain] = await Promise.all([loadVision(), loadBrain()]);
-        // Inject the brain's describeScreen so vision captures, then captions via Qwen2-VL.
+        // Inject the brain's describeScreen so vision captures, then captions via Qwen2.5-VL.
         screen = await vision.askScreen(transcript, (img) => brain.describeScreen(img));
       } catch (err) {
         pushEvent({

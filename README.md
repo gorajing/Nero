@@ -111,9 +111,9 @@ Create a local `.env` file for live integrations:
 
 ```bash
 NEBIUS_API_KEY=...
-NEBIUS_MODEL=deepseek-ai/DeepSeek-R1-0528
-NEBIUS_VISION_MODEL=Qwen/Qwen2-VL-72B-Instruct
-NEBIUS_EMBED_MODEL=BAAI/bge-en-icl
+NEBIUS_MODEL=deepseek-ai/DeepSeek-V3.2
+NEBIUS_VISION_MODEL=Qwen/Qwen2.5-VL-72B-Instruct
+NEBIUS_EMBED_MODEL=Qwen/Qwen3-Embedding-8B
 
 INSFORGE_URL=https://<project>.insforge.app
 INSFORGE_KEY=...

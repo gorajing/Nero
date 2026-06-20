@@ -9,7 +9,7 @@ declare const process: {
 
 const express = require('express');
 
-const DEFAULT_MODEL = 'deepseek-ai/DeepSeek-R1-0528';
+const DEFAULT_MODEL = 'deepseek-ai/DeepSeek-V3.2';
 const NEBIUS_COMPLETIONS_URL = 'https://api.tokenfactory.nebius.com/v1/chat/completions';
 const VAPI_META_FIELDS = new Set(['call', 'metadata', 'phoneNumber', 'customer', 'timestamp']);
 

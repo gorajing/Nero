@@ -7,7 +7,16 @@ import type { AvatarState } from '../../shared/avatar';
 
 export type { AvatarState };
 
-export type ActivityCueKind = 'thinking' | 'memory' | 'read' | 'edit' | 'command' | 'success' | 'error' | 'talking';
+export type ActivityCueKind =
+  | 'thinking'
+  | 'memory'
+  | 'read'
+  | 'edit'
+  | 'command'
+  | 'success'
+  | 'error'
+  | 'talking'
+  | 'muted';
 
 export interface ActivityCue {
   kind: ActivityCueKind;
@@ -35,6 +44,8 @@ export interface CharacterDriver {
    * No-op for the placeholder beyond a visual cue.
    */
   setTalking(talking: boolean): void;
+  /** Presentation-mode input gate: show whether the user's mic is muted. */
+  setMuted(muted: boolean): void;
   /** Play a pre-rendered narration clip with built-in lip-sync (model.speak). */
   speak?(audioUrl: string, onFinish?: () => void): void;
   /** Stop any speak() playback. */

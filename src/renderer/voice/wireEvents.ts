@@ -31,13 +31,31 @@ export interface WireOptions {
   onToolCalls?: (list: VapiToolCall[]) => void;
   /** Optional surface for fatal voice errors (e.g. show a banner). */
   onError?: (e: unknown) => void;
+  /** Keep the UI's call gate in sync with Vapi/Daily ending the call externally. */
+  onCallActiveChange?: (active: boolean) => void;
+  /** Hard gate final user transcripts during demo/presentation mute. */
+  isInputMuted?: () => boolean;
 }
 
 export function wireVapiEvents(vapi: Vapi, opts: WireOptions): void {
-  const { character, captions, sessionId, onToolCalls, onError } = opts;
+  const {
+    character,
+    captions,
+    sessionId,
+    onToolCalls,
+    onError,
+    onCallActiveChange,
+    isInputMuted,
+  } = opts;
+  let turnInFlight = false;
 
-  vapi.on('call-start', () => character.setState('listening'));
+  vapi.on('call-start', () => {
+    onCallActiveChange?.(true);
+    character.setState('listening');
+  });
   vapi.on('call-end', () => {
+    onCallActiveChange?.(false);
+    turnInFlight = false;
     character.setTalking(false);
     character.setState('idle');
   });
@@ -61,10 +79,16 @@ export function wireVapiEvents(vapi: Vapi, opts: WireOptions): void {
       if (m.role === 'user' && !isFinal) character.setState('listening');
       // Hand the final user transcript to the orchestrator (the primary handoff).
       if (m.role === 'user' && isFinal && m.transcript.trim()) {
+        if (isInputMuted?.()) return;
         const companion = getCompanion();
-        companion?.turnRun?.({ transcript: m.transcript, sessionId }).catch((err) =>
-          console.error('[voice] turnRun failed', err),
-        );
+        if (!companion?.turnRun || turnInFlight) return;
+        turnInFlight = true;
+        companion
+          .turnRun({ transcript: m.transcript, sessionId })
+          .catch((err) => console.error('[voice] turnRun failed', err))
+          .finally(() => {
+            turnInFlight = false;
+          });
       }
       return;
     }

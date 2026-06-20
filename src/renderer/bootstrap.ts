@@ -57,6 +57,30 @@ export async function bootstrap(): Promise<void> {
     }
   };
 
+  const startBtn = el<HTMLButtonElement>('start-btn');
+  const stopBtn = el<HTMLButtonElement>('stop-btn');
+  const muteBtn = el<HTMLButtonElement>('mute-btn');
+
+  let callActive = false;
+  let callStarting = false;
+  let micMuted = false;
+
+  const setCallActive = (active: boolean, status?: string): void => {
+    callActive = active;
+    if (status) setStatus(status);
+    if (startBtn) startBtn.disabled = active || callStarting;
+    if (stopBtn) stopBtn.disabled = !active;
+    if (muteBtn) muteBtn.disabled = !active;
+  };
+
+  const setMicMuted = (next: boolean, status?: string): void => {
+    micMuted = next;
+    driver.setMuted(next);
+    if (voice.isActive) voice.setMuted(next);
+    if (muteBtn) muteBtn.textContent = next ? 'Unmute' : 'Mute';
+    setStatus(status ?? (next ? 'Nero mic muted. Judge-talk is ignored.' : 'Nero mic live.'));
+  };
+
   const voice = createVoice({
     config,
     character: driver,
@@ -64,14 +88,19 @@ export async function bootstrap(): Promise<void> {
     sessionId,
     onToolCalls,
     onError: (e) => setStatus(`Voice error: ${describeError(e)}`),
+    onCallActiveChange: (active) => {
+      setCallActive(
+        active,
+        active
+          ? micMuted
+            ? 'Call active. Nero mic muted.'
+            : 'Call active. Speak to Nero.'
+          : 'Call ended. Click Nero to talk.',
+      );
+      if (active) voice.setMuted(micMuted);
+    },
+    isInputMuted: () => micMuted,
   });
-
-  const startBtn = el<HTMLButtonElement>('start-btn');
-  const stopBtn = el<HTMLButtonElement>('stop-btn');
-  const muteBtn = el<HTMLButtonElement>('mute-btn');
-
-  let callActive = false;
-  let callStarting = false;
 
   const startVoiceCall = async () => {
     if (callActive || callStarting) return;
@@ -80,18 +109,17 @@ export async function bootstrap(): Promise<void> {
       return;
     }
     callStarting = true;
+    if (startBtn) startBtn.disabled = true;
     try {
       setStatus('Starting call…');
       await voice.startCompanionCall();
-      callActive = true;
-      setStatus('Call active. Speak to Nero.');
-      if (startBtn) startBtn.disabled = true;
-      if (stopBtn) stopBtn.disabled = false;
-      if (muteBtn) muteBtn.disabled = false;
+      voice.setMuted(micMuted);
+      setCallActive(true, micMuted ? 'Call active. Nero mic muted.' : 'Call active. Speak to Nero.');
     } catch (e) {
       setStatus(`Could not start call: ${describeError(e)}`);
     } finally {
       callStarting = false;
+      if (!callActive && startBtn) startBtn.disabled = false;
     }
   };
 
@@ -102,26 +130,31 @@ export async function bootstrap(): Promise<void> {
   if (config.floatingWindow) {
     canvas.setAttribute('role', 'button');
     canvas.setAttribute('aria-label', 'Start talking to Nero');
-    canvas.title = 'Click to talk to Nero';
-    canvas.style.cursor = 'pointer';
-    canvas.addEventListener('click', () => {
-      void startVoiceCall();
+    canvas.title = 'Click to talk to Nero. Right-click or press M to mute. Drag to move.';
+    canvas.style.cursor = 'grab';
+    installFloatingWindowGesture(canvas, startVoiceCall);
+    canvas.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault();
+      setMicMuted(!micMuted);
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key.toLowerCase() !== 'm' || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      ev.preventDefault();
+      setMicMuted(!micMuted);
     });
   }
 
+  getCompanion()?.onMicToggleMute?.(() => {
+    setMicMuted(!micMuted);
+  });
+
   stopBtn?.addEventListener('click', () => {
     voice.endCall();
-    callActive = false;
-    setStatus('Call ended.');
-    if (startBtn) startBtn.disabled = false;
-    if (stopBtn) stopBtn.disabled = true;
-    if (muteBtn) muteBtn.disabled = true;
+    setCallActive(false, 'Call ended.');
   });
 
   muteBtn?.addEventListener('click', () => {
-    const next = !voice.isMuted();
-    voice.setMuted(next);
-    if (muteBtn) muteBtn.textContent = next ? 'Unmute' : 'Mute';
+    setMicMuted(!micMuted);
   });
 
   // Text-input path: feed a typed task straight to MAIN's orchestrator
@@ -147,6 +180,10 @@ export async function bootstrap(): Promise<void> {
     if (e.kind === 'run.started') {
       if (cancelBtn) cancelBtn.disabled = false;
       setStatus('Coding agent running — click Stop to abort.');
+    } else if (e.kind === 'run.completed') {
+      if (voice.isActive) voice.narrateExact('Done. I finished that.');
+    } else if (e.kind === 'run.failed') {
+      if (voice.isActive) voice.narrateExact('I got stuck. Please check the app.');
     }
   });
 
@@ -206,7 +243,84 @@ export async function bootstrap(): Promise<void> {
     setState: (s: Parameters<typeof driver.setState>[0]) => driver.setState(s),
     setActivity: (cue: Parameters<typeof driver.setActivity>[0]) => driver.setActivity(cue),
     setMouthOpen: (v: number) => driver.setMouthOpen(v),
+    setMuted: (v: boolean) => setMicMuted(v),
   };
+}
+
+function installFloatingWindowGesture(
+  canvas: HTMLCanvasElement,
+  onTap: () => void | Promise<void>,
+): void {
+  const dragThresholdPx = 4;
+  let pointerId: number | null = null;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastY = 0;
+  let dragging = false;
+
+  function resetGesture(): void {
+    pointerId = null;
+    dragging = false;
+    canvas.classList.remove('dragging');
+    canvas.style.cursor = 'grab';
+  }
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    if (!ev.isPrimary || ev.button !== 0) return;
+    pointerId = ev.pointerId;
+    startX = ev.screenX;
+    startY = ev.screenY;
+    lastX = ev.screenX;
+    lastY = ev.screenY;
+    dragging = false;
+    canvas.setPointerCapture(ev.pointerId);
+    canvas.style.cursor = 'grabbing';
+    ev.preventDefault();
+  });
+
+  canvas.addEventListener('pointermove', (ev) => {
+    if (pointerId !== ev.pointerId) return;
+
+    const totalDx = ev.screenX - startX;
+    const totalDy = ev.screenY - startY;
+    if (!dragging && Math.hypot(totalDx, totalDy) >= dragThresholdPx) {
+      dragging = true;
+      canvas.classList.add('dragging');
+    }
+
+    if (!dragging) return;
+
+    const dx = ev.screenX - lastX;
+    const dy = ev.screenY - lastY;
+    lastX = ev.screenX;
+    lastY = ev.screenY;
+
+    const companion = getCompanion();
+    if (companion?.moveWindowBy) {
+      void companion.moveWindowBy({ dx, dy });
+    }
+    ev.preventDefault();
+  });
+
+  canvas.addEventListener('pointerup', (ev) => {
+    if (pointerId !== ev.pointerId) return;
+    const wasDragging = dragging;
+    if (canvas.hasPointerCapture(ev.pointerId)) {
+      canvas.releasePointerCapture(ev.pointerId);
+    }
+    resetGesture();
+    ev.preventDefault();
+
+    if (!wasDragging) {
+      void onTap();
+    }
+  });
+
+  canvas.addEventListener('pointercancel', (ev) => {
+    if (pointerId !== ev.pointerId) return;
+    resetGesture();
+  });
 }
 
 function describeError(e: unknown): string {

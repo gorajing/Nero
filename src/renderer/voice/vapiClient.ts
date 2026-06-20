@@ -26,6 +26,22 @@ export function peekVapi(): Vapi | null {
 }
 
 /**
+ * Dev/demo reload safety: Vite can reload the renderer while a Vapi singleton is
+ * still alive in module state. Drop it so a fresh bootstrap cannot inherit stale
+ * listeners or a stale active-call flag.
+ */
+export function resetVapi(): void {
+  if (!instance) return;
+  try {
+    void instance.stop();
+  } catch (err) {
+    console.error('[vapi] reset stop failed', err);
+  } finally {
+    instance = null;
+  }
+}
+
+/**
  * Build the inline custom-llm assistant. We type it as `unknown`-cast at the
  * start() boundary: Vapi's CreateAssistantDTO is a large generated discriminated
  * union and coupling to it would make this component brittle. The shape below is

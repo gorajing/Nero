@@ -48,11 +48,15 @@ const companion = {
     ipcRenderer.invoke(CH.runTask, { prompt, agent }),
   cancelTask: (runId?: string): Promise<void> =>
     ipcRenderer.invoke(CH.cancelTask, runId),
+  moveWindowBy: (delta: { dx: number; dy: number }): Promise<void> =>
+    ipcRenderer.invoke(CH.windowMoveBy, delta),
   // Push streams.
   onActionEvent: (cb: (e: ActionEvent) => void): (() => void) =>
     subscribe<ActionEvent>(CH.actionEvent, cb),
   onRunEnd: (cb: (p: { runId: string }) => void): (() => void) =>
     subscribe<{ runId: string }>(CH.runEnd, cb),
+  onMicToggleMute: (cb: () => void): (() => void) =>
+    subscribe<void>(CH.micToggleMute, () => cb()),
 };
 
 const brain = {
@@ -62,7 +66,7 @@ const brain = {
     ipcRenderer.invoke(CH.brainDescribeScreen, input),
   embed: (input: string | string[]): Promise<number[] | number[][]> =>
     ipcRenderer.invoke(CH.brainEmbed, input),
-  // DeepSeek-R1 reasoning_content deltas -> avatar 'thinking'.
+  // DeepSeek reasoning_content deltas -> avatar 'thinking'.
   onReasoning: (cb: (delta: string) => void): (() => void) =>
     subscribe<string>(CH.brainReasoning, cb),
   // Optional live JSON-preview content deltas.
