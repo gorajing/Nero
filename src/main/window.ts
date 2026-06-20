@@ -15,6 +15,7 @@ const FLOATING_WINDOW_SIZE = {
   width: 380,
   height: 400,
 } as const;
+const FLOATING_WINDOW_ASPECT_RATIO = FLOATING_WINDOW_SIZE.width / FLOATING_WINDOW_SIZE.height;
 
 export function createWindow(): BrowserWindow {
   // Renderer-safe runtime config, sourced from MAIN's process.env (populated by
@@ -51,6 +52,7 @@ export function createWindow(): BrowserWindow {
   });
 
   if (FLOATING_WINDOW_FLAG) {
+    mainWindow.setAspectRatio(FLOATING_WINDOW_ASPECT_RATIO);
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     mainWindow.setFullScreenable(false);
