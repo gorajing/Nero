@@ -12,6 +12,10 @@ Built for the June 19 Midsummer Multimodal AI Hackathon.
 ask -> recall memory -> think on Nebius -> run Codex or Claude -> remember the result
 ```
 
+Post-demo, the product direction is pet-first: Nero should become the best
+desktop AI pet, with coding as one useful trick. See
+[`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md).
+
 ## Why This Exists
 
 Most coding agents still feel like command-line tools with better autocomplete.
