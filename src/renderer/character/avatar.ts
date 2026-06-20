@@ -14,6 +14,8 @@ import type { Live2DModel as Live2DModelType } from 'pixi-live2d-display-lipsync
 import type { AvatarState } from '../../shared/avatar';
 import type { ActivityCue } from './types';
 
+const MUTED_MIC_BADGE_URL = 'assets/muted-mic-32-2color.png';
+
 // REQUIRED by the plugin: it reads window.PIXI.Ticker to auto-update models, and
 // for some bundlers grabs other PIXI internals. Must be set before from().
 (window as unknown as { PIXI: typeof PIXI }).PIXI = PIXI;
@@ -139,6 +141,11 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   const foreground = new PIXI.Graphics();
   const prop = new PIXI.Graphics();
   const signal = new PIXI.Graphics();
+  const mutedBadge = PIXI.Sprite.from(MUTED_MIC_BADGE_URL);
+  mutedBadge.anchor.set(0.5);
+  mutedBadge.visible = false;
+  mutedBadge.zIndex = 3;
+  mutedBadge.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
   const px = (g: PIXI.Graphics, x: number, y: number, w: number, h: number, color: number, alpha = 1) => {
     g.beginFill(color, alpha);
@@ -372,11 +379,6 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     foreground.clear();
 
     if (muted) {
-      px(signal, 6, 4, 1, 1, EFFECT.mutedSoft);
-      px(signal, 5, 5, 1, 1, EFFECT.muted);
-      px(signal, 14, 4, 1, 1, EFFECT.mutedSoft);
-      px(signal, 15, 5, 1, 1, EFFECT.muted);
-      px(signal, 5, 6, 11, 1, EFFECT.muted);
       return;
     }
 
@@ -444,14 +446,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       px(prop, 16, 4, 1, 1, EFFECT.signalSoft, alpha);
       px(prop, 16, 7, 1, 1, EFFECT.signalSoft, alpha);
     } else if (cue.kind === 'muted') {
-      px(prop, 14, 6, 2, 4, EFFECT.mutedSoft, alpha);
-      px(prop, 14, 10, 2, 1, EFFECT.mutedSoft, alpha);
-      px(prop, 13, 11, 4, 1, EFFECT.mutedSoft, alpha);
-      px(prop, 12, 7, 1, 1, EFFECT.muted, alpha);
-      px(prop, 13, 8, 1, 1, EFFECT.muted, alpha);
-      px(prop, 14, 9, 1, 1, EFFECT.muted, alpha);
-      px(prop, 15, 10, 1, 1, EFFECT.muted, alpha);
-      px(prop, 16, 11, 1, 1, EFFECT.muted, alpha);
+      return;
     } else if (cue.kind === 'thinking') {
       px(prop, 10, 1, 1, 1, EFFECT.thought, alpha);
       px(prop, 12, 0, 1, 1, EFFECT.thoughtHot, alpha);
@@ -528,7 +523,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   refreshLabelVisibility();
 
   body.addChild(tail, cat, eyes, mouth, foreground, prop, signal);
-  container.addChild(aura, body, activityBlip, activityTail, label);
+  container.addChild(aura, body, mutedBadge, activityBlip, activityTail, label);
   app.stage.addChild(container);
 
   let lastFitWidth = 0;
@@ -578,6 +573,13 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     body.scale.x = action === 'walking' ? walkDirection(tick) : 1;
     body.position.x = action === 'walking' ? walkOffset(tick) : 0;
     body.position.y = breathe + focusLift;
+    mutedBadge.visible = muted;
+    if (muted) {
+      const badgeScale = 0.22 + Math.sin(tick / 30) * 0.006;
+      mutedBadge.scale.set(badgeScale);
+      mutedBadge.alpha = 0.96;
+      mutedBadge.position.set(132, -122 + Math.round(Math.sin(tick / 26) * 4));
+    }
     drawTail(tick, action);
     drawCat(tick, action);
     redrawFace(tick, action);

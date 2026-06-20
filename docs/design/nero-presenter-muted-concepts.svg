@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Nero presenter-muted concept sheet</title>
+  <desc id="desc">Six pixel-art design references for showing that the presenter microphone is muted while Nero can still work.</desc>
+  <defs>
+    <pattern id="checker" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#fbfbfd"/>
+      <rect width="10" height="10" fill="#eef0f6"/>
+      <rect x="10" y="10" width="10" height="10" fill="#eef0f6"/>
+    </pattern>
+    <style>
+      .panel { fill: rgba(255,255,255,0.82); stroke: #d9dce8; stroke-width: 1; }
+      .label { font: 700 15px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #363948; text-anchor: middle; }
+      .note { font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #72768a; text-anchor: middle; }
+      .px { shape-rendering: crispEdges; }
+      .black { fill: #171821; }
+      .white { fill: #f4f0e8; }
+      .eye { fill: #ffd61e; }
+      .ear { fill: #70736e; }
+      .lav { fill: #b9b4ff; opacity: 0.52; }
+      .pink { fill: #f0a8b8; }
+      .blue { fill: #8fd7ff; }
+      .gray { fill: #9da0a6; }
+      .soft { fill: #f3d7df; }
+    </style>
+  </defs>
+
+  <rect width="960" height="360" fill="url(#checker)"/>
+  <text x="480" y="32" class="label">Presenter-muted Nero concepts</text>
+  <text x="480" y="53" class="note">This means the human input is gated. Nero can still think, work, and finish.</text>
+
+  <g id="base-cat" class="px">
+    <rect class="black" x="24" y="72" width="8" height="48"/>
+    <rect class="black" x="16" y="48" width="8" height="32"/>
+    <rect class="black" x="16" y="48" width="16" height="8"/>
+    <rect class="black" x="32" y="104" width="16" height="8"/>
+    <rect class="black" x="32" y="112" width="16" height="8"/>
+
+    <rect class="black" x="40" y="96" width="64" height="32"/>
+    <rect class="black" x="48" y="88" width="40" height="8"/>
+    <rect class="white" x="80" y="96" width="24" height="32"/>
+    <rect class="black" x="48" y="128" width="8" height="16"/>
+    <rect class="black" x="64" y="128" width="8" height="16"/>
+    <rect class="black" x="88" y="128" width="8" height="16"/>
+    <rect class="black" x="104" y="128" width="8" height="16"/>
+    <rect class="white" x="48" y="136" width="8" height="8"/>
+    <rect class="white" x="64" y="136" width="8" height="8"/>
+    <rect class="white" x="88" y="136" width="8" height="8"/>
+    <rect class="white" x="104" y="136" width="8" height="8"/>
+
+    <rect class="black" x="72" y="40" width="56" height="8"/>
+    <rect class="black" x="72" y="48" width="56" height="32"/>
+    <rect class="black" x="64" y="64" width="8" height="16"/>
+    <rect class="black" x="128" y="64" width="8" height="16"/>
+    <rect class="black" x="80" y="24" width="16" height="24"/>
+    <rect class="black" x="112" y="24" width="16" height="24"/>
+    <rect class="ear" x="88" y="32" width="8" height="8"/>
+    <rect class="ear" x="112" y="32" width="8" height="8"/>
+    <rect class="eye" x="96" y="64" width="8" height="8"/>
+    <rect class="eye" x="120" y="64" width="8" height="8"/>
+  </g>
+
+  <g transform="translate(24,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <use href="#base-cat"/>
+    <rect class="black px" x="104" y="32" width="16" height="16"/>
+    <rect class="ear px" x="112" y="40" width="8" height="8"/>
+    <rect class="black px" x="80" y="32" width="16" height="16"/>
+    <rect class="ear px" x="88" y="40" width="8" height="8"/>
+    <rect class="lav px" x="88" y="8" width="8" height="8"/>
+    <rect class="lav px" x="112" y="8" width="8" height="8"/>
+    <text x="62" y="172" class="label">tucked</text>
+  </g>
+
+  <g transform="translate(178,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <use href="#base-cat"/>
+    <rect class="pink px" x="80" y="84" width="48" height="8"/>
+    <rect class="gray px" x="96" y="88" width="16" height="16"/>
+    <rect class="white px" x="96" y="104" width="16" height="8"/>
+    <rect class="pink px" x="80" y="108" width="8" height="8"/>
+    <rect class="pink px" x="88" y="116" width="8" height="8"/>
+    <rect class="pink px" x="96" y="124" width="8" height="8"/>
+    <rect class="pink px" x="104" y="132" width="8" height="8"/>
+    <text x="62" y="172" class="label">bell</text>
+  </g>
+
+  <g transform="translate(332,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <use href="#base-cat"/>
+    <rect class="white px" x="64" y="72" width="16" height="8"/>
+    <rect class="white px" x="72" y="80" width="16" height="8"/>
+    <rect class="pink px" x="112" y="80" width="8" height="8"/>
+    <rect class="pink px" x="120" y="88" width="8" height="8"/>
+    <rect class="pink px" x="128" y="96" width="8" height="8"/>
+    <text x="62" y="172" class="label">shush</text>
+  </g>
+
+  <g transform="translate(486,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <use href="#base-cat"/>
+    <rect class="soft px" x="80" y="8" width="8" height="8"/>
+    <rect class="soft px" x="96" y="-8" width="16" height="16"/>
+    <rect class="soft px" x="120" y="-16" width="24" height="16"/>
+    <rect class="gray px" x="128" y="-24" width="8" height="8"/>
+    <text x="62" y="172" class="label">quiet</text>
+  </g>
+
+  <g transform="translate(640,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <rect class="lav px" x="24" y="24" width="96" height="96"/>
+    <rect class="blue px" x="40" y="8" width="64" height="8" opacity="0.5"/>
+    <rect class="blue px" x="104" y="32" width="8" height="56" opacity="0.5"/>
+    <rect class="blue px" x="40" y="128" width="64" height="8" opacity="0.5"/>
+    <rect class="blue px" x="16" y="40" width="8" height="64" opacity="0.5"/>
+    <use href="#base-cat"/>
+    <text x="62" y="172" class="label">aura</text>
+  </g>
+
+  <g transform="translate(794,82)">
+    <rect class="panel" x="-8" y="-22" width="140" height="206" rx="10"/>
+    <use href="#base-cat"/>
+    <rect class="blue px" x="136" y="56" width="8" height="8"/>
+    <rect class="blue px" x="144" y="48" width="8" height="8"/>
+    <rect class="gray px" x="144" y="72" width="8" height="8"/>
+    <rect class="pink px" x="128" y="48" width="8" height="8"/>
+    <rect class="pink px" x="136" y="56" width="8" height="8"/>
+    <rect class="pink px" x="144" y="64" width="8" height="8"/>
+    <rect class="gray px" x="56" y="56" width="8" height="8"/>
+    <rect class="gray px" x="48" y="48" width="8" height="8"/>
+    <text x="62" y="172" class="label">signal off</text>
+  </g>
+</svg>

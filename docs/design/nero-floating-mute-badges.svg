@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="440" viewBox="0 0 920 440" role="img" aria-labelledby="title desc">
+  <title id="title">Floating mute badge experiments for Nero</title>
+  <desc id="desc">Two pixel-art Nero concepts comparing a floating muted microphone badge and a floating muted speaker badge.</desc>
+  <defs>
+    <pattern id="checker" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#fbfbfd"/>
+      <rect width="10" height="10" fill="#eef0f6"/>
+      <rect x="10" y="10" width="10" height="10" fill="#eef0f6"/>
+    </pattern>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#151722" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .panel { fill: rgba(255,255,255,0.86); stroke: #d9dce8; stroke-width: 1; }
+      .badge { fill: rgba(255,255,255,0.92); stroke: #d7dae6; stroke-width: 2; }
+      .label { font: 700 18px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #303342; text-anchor: middle; }
+      .small { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #777b8d; text-anchor: middle; }
+      .px { shape-rendering: crispEdges; }
+      .black { fill: #171821; }
+      .white { fill: #f4f0e8; }
+      .eye { fill: #ffd61e; }
+      .ear { fill: #70736e; }
+      .off { fill: #e78ba0; }
+      .gray { fill: #9da0a6; }
+      .ink { fill: #24272e; }
+      .lav { fill: #c9c4ff; }
+      .blue { fill: #8fd7ff; }
+    </style>
+    <g id="nero-cat" class="px">
+      <rect class="black" x="28" y="78" width="10" height="60"/>
+      <rect class="black" x="18" y="48" width="10" height="40"/>
+      <rect class="black" x="18" y="48" width="20" height="10"/>
+      <rect class="black" x="38" y="118" width="20" height="10"/>
+      <rect class="black" x="38" y="128" width="20" height="10"/>
+
+      <rect class="black" x="50" y="108" width="80" height="40"/>
+      <rect class="black" x="60" y="98" width="50" height="10"/>
+      <rect class="white" x="100" y="108" width="30" height="40"/>
+      <rect class="black" x="60" y="148" width="10" height="20"/>
+      <rect class="black" x="80" y="148" width="10" height="20"/>
+      <rect class="black" x="110" y="148" width="10" height="20"/>
+      <rect class="black" x="130" y="148" width="10" height="20"/>
+      <rect class="white" x="60" y="158" width="10" height="10"/>
+      <rect class="white" x="80" y="158" width="10" height="10"/>
+      <rect class="white" x="110" y="158" width="10" height="10"/>
+      <rect class="white" x="130" y="158" width="10" height="10"/>
+
+      <rect class="black" x="90" y="38" width="70" height="10"/>
+      <rect class="black" x="90" y="48" width="70" height="40"/>
+      <rect class="black" x="80" y="68" width="10" height="20"/>
+      <rect class="black" x="160" y="68" width="10" height="20"/>
+      <rect class="black" x="100" y="18" width="20" height="30"/>
+      <rect class="black" x="140" y="18" width="20" height="30"/>
+      <rect class="ear" x="110" y="28" width="10" height="10"/>
+      <rect class="ear" x="140" y="28" width="10" height="10"/>
+      <rect class="eye" x="120" y="68" width="10" height="10"/>
+      <rect class="eye" x="150" y="68" width="10" height="10"/>
+    </g>
+  </defs>
+
+  <rect width="920" height="440" fill="url(#checker)"/>
+  <text x="460" y="34" class="label">Floating status badges</text>
+  <text x="460" y="56" class="small">Try both, but keep their meanings separate: input muted vs. audio quiet.</text>
+
+  <g transform="translate(58,92)">
+    <rect class="panel" x="0" y="0" width="374" height="298" rx="12" filter="url(#softShadow)"/>
+    <g transform="translate(96,66)">
+      <use href="#nero-cat"/>
+      <g transform="translate(126,-32)">
+        <rect class="badge" x="0" y="0" width="74" height="58" rx="16"/>
+        <rect class="lav px" x="16" y="10" width="22" height="8"/>
+        <rect class="ink px" x="20" y="18" width="18" height="26"/>
+        <rect class="ink px" x="16" y="24" width="26" height="14"/>
+        <rect class="ink px" x="28" y="44" width="6" height="8"/>
+        <rect class="ink px" x="20" y="50" width="22" height="5"/>
+        <rect class="off px" x="48" y="14" width="8" height="8"/>
+        <rect class="off px" x="40" y="22" width="8" height="8"/>
+        <rect class="off px" x="32" y="30" width="8" height="8"/>
+        <rect class="off px" x="24" y="38" width="8" height="8"/>
+        <rect class="off px" x="16" y="46" width="8" height="8"/>
+      </g>
+    </g>
+    <text x="187" y="246" class="label">input-muted badge</text>
+    <text x="187" y="269" class="small">Best meaning: presenter mic is gated.</text>
+  </g>
+
+  <g transform="translate(488,92)">
+    <rect class="panel" x="0" y="0" width="374" height="298" rx="12" filter="url(#softShadow)"/>
+    <g transform="translate(96,66)">
+      <use href="#nero-cat"/>
+      <g transform="translate(126,-32)">
+        <rect class="badge" x="0" y="0" width="74" height="58" rx="16"/>
+        <rect class="ink px" x="14" y="24" width="12" height="14"/>
+        <rect class="ink px" x="26" y="18" width="18" height="26"/>
+        <rect class="ink px" x="38" y="12" width="8" height="38"/>
+        <rect class="gray px" x="52" y="18" width="5" height="5"/>
+        <rect class="gray px" x="56" y="24" width="5" height="5"/>
+        <rect class="gray px" x="58" y="32" width="5" height="5"/>
+        <rect class="gray px" x="56" y="40" width="5" height="5"/>
+        <rect class="off px" x="50" y="10" width="8" height="8"/>
+        <rect class="off px" x="42" y="18" width="8" height="8"/>
+        <rect class="off px" x="34" y="26" width="8" height="8"/>
+        <rect class="off px" x="26" y="34" width="8" height="8"/>
+        <rect class="off px" x="18" y="42" width="8" height="8"/>
+      </g>
+    </g>
+    <text x="187" y="246" class="label">speaker-muted badge</text>
+    <text x="187" y="269" class="small">Best meaning: Nero/audio output is quiet.</text>
+  </g>
+</svg>
