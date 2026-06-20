@@ -6,7 +6,7 @@
 
 import type { CompanionConfig } from '../config';
 import type { CharacterDriver, CaptionSink } from '../character/types';
-import { getVapi, peekVapi, buildAssistant } from './vapiClient';
+import { getVapi, peekVapi, resetVapi, buildAssistant } from './vapiClient';
 import { wireVapiEvents } from './wireEvents';
 import type { VapiToolCall } from './messages';
 
@@ -34,10 +34,15 @@ export interface CreateVoiceOptions {
   sessionId: string;
   onToolCalls?: (list: VapiToolCall[]) => void;
   onError?: (e: unknown) => void;
+  onCallActiveChange?: (active: boolean) => void;
+  isInputMuted?: () => boolean;
 }
 
 export function createVoice(opts: CreateVoiceOptions): VoiceController {
   const { config, character, captions, sessionId, onToolCalls, onError } = opts;
+  resetVapi();
+  wired = false;
+  callActive = false;
 
   return {
     get isActive() {
@@ -49,7 +54,18 @@ export function createVoice(opts: CreateVoiceOptions): VoiceController {
       // Throws if the public key is missing — surfaced to the caller/UI.
       const vapi = getVapi(config.vapiPublicKey);
       if (!wired) {
-        wireVapiEvents(vapi, { character, captions, sessionId, onToolCalls, onError });
+        wireVapiEvents(vapi, {
+          character,
+          captions,
+          sessionId,
+          onToolCalls,
+          onError,
+          onCallActiveChange: (active) => {
+            callActive = active;
+            opts.onCallActiveChange?.(active);
+          },
+          isInputMuted: opts.isInputMuted,
+        });
         wired = true;
       }
       if (config.vapiAssistantId) {
@@ -64,12 +80,14 @@ export function createVoice(opts: CreateVoiceOptions): VoiceController {
         await vapi.start(buildAssistant(config) as never);
       }
       callActive = true;
+      opts.onCallActiveChange?.(true);
     },
 
     endCall() {
       const vapi = peekVapi();
       if (vapi) void vapi.stop();
       callActive = false;
+      opts.onCallActiveChange?.(false);
       character.setTalking(false);
       character.setState('idle');
     },

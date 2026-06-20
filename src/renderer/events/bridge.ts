@@ -16,6 +16,10 @@ interface CompanionBridgeLike {
   turnRun?(input: TurnInput): Promise<{ runId: string }>;
   /** Abort the most recent run when called with no id (orchestrator aborts the latest). */
   cancelTask?(runId?: string): Promise<void>;
+  /** Move the current floating BrowserWindow by screen-pixel deltas. */
+  moveWindowBy?(delta: { dx: number; dy: number }): Promise<void>;
+  /** Subscribe to global demo mute toggles. */
+  onMicToggleMute?(cb: () => void): () => void;
 }
 
 /** The slice of window.brain this component consumes. */

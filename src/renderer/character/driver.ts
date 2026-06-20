@@ -53,6 +53,11 @@ class Live2DCharacterDriver implements CharacterDriver {
     if (!talking) this.lipsync.setAmplitude(0);
   }
 
+  setMuted(muted: boolean): void {
+    this.avatar.placeholder?.setMuted(muted);
+    if (muted) this.lipsync.setAmplitude(0);
+  }
+
   speak(audioUrl: string, onFinish?: () => void): void {
     const model = this.avatar.model;
     if (!model || typeof model.speak !== 'function') {

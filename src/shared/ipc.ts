@@ -5,6 +5,8 @@ export interface TurnInput { transcript: string; sessionId: string }
 
 export const CH = {
   micStatus: 'mic:status', micRequest: 'mic:request',
+  windowMoveBy: 'window:moveBy',
+  micToggleMute: 'mic:toggleMute',
   turnRun: 'turn:run', runTask: 'orch:runTask', cancelTask: 'orch:cancelTask',
   actionEvent: 'orch:actionEvent', runEnd: 'orch:runEnd',
   brainDecide: 'brain:decide', brainReasoning: 'brain:reasoning', brainContent: 'brain:content',

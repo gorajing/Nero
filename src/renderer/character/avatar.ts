@@ -47,6 +47,8 @@ export interface Placeholder {
   setMouthOpen(v: number): void;
   /** Assistant speech boundary from Vapi. */
   setTalking(talking: boolean): void;
+  /** Presentation-mode mic input gate. */
+  setMuted(muted: boolean): void;
 }
 
 async function modelExists(url: string): Promise<boolean> {
@@ -92,6 +94,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   let state: AvatarState = 'idle';
   let mouthOpen = 0;
   let talking = false;
+  let muted = false;
   let blinkUntil = 0;
   let nextBlink = performance.now() + 1700;
   let activity: ActivityCue | null = null;
@@ -119,6 +122,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     successGold: 0xffdf4d,
     error: 0xff4d4d,
     errorHot: 0xff8a3d,
+    muted: 0xff4d6d,
+    mutedSoft: 0xffb0a8,
   } as const;
 
   const aura = new PIXI.Graphics();
@@ -158,6 +163,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
         return EFFECT.error;
       case 'talking':
         return EFFECT.signal;
+      case 'muted':
+        return EFFECT.muted;
       default:
         return CAT.white;
     }
@@ -364,6 +371,15 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     signal.clear();
     foreground.clear();
 
+    if (muted) {
+      px(signal, 6, 4, 1, 1, EFFECT.mutedSoft);
+      px(signal, 5, 5, 1, 1, EFFECT.muted);
+      px(signal, 14, 4, 1, 1, EFFECT.mutedSoft);
+      px(signal, 15, 5, 1, 1, EFFECT.muted);
+      px(signal, 5, 6, 11, 1, EFFECT.muted);
+      return;
+    }
+
     if (talking || state === 'listening') {
       const frame = Math.floor(tick / 16) % 3;
       px(signal, 15, 5, 1, 1, EFFECT.signal);
@@ -380,6 +396,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     if (state === 'working') return { kind: 'command', text: 'working' };
     if (state === 'done') return { kind: 'success', text: 'done' };
     if (state === 'error') return { kind: 'error', text: 'stuck' };
+    if (muted) return { kind: 'muted', text: 'muted' };
     if (talking) return { kind: 'talking', text: 'speaking' };
     return null;
   };
@@ -426,6 +443,15 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       px(prop, 15, 5, 1, 1, EFFECT.signal, alpha);
       px(prop, 16, 4, 1, 1, EFFECT.signalSoft, alpha);
       px(prop, 16, 7, 1, 1, EFFECT.signalSoft, alpha);
+    } else if (cue.kind === 'muted') {
+      px(prop, 14, 6, 2, 4, EFFECT.mutedSoft, alpha);
+      px(prop, 14, 10, 2, 1, EFFECT.mutedSoft, alpha);
+      px(prop, 13, 11, 4, 1, EFFECT.mutedSoft, alpha);
+      px(prop, 12, 7, 1, 1, EFFECT.muted, alpha);
+      px(prop, 13, 8, 1, 1, EFFECT.muted, alpha);
+      px(prop, 14, 9, 1, 1, EFFECT.muted, alpha);
+      px(prop, 15, 10, 1, 1, EFFECT.muted, alpha);
+      px(prop, 16, 11, 1, 1, EFFECT.muted, alpha);
     } else if (cue.kind === 'thinking') {
       px(prop, 10, 1, 1, 1, EFFECT.thought, alpha);
       px(prop, 12, 0, 1, 1, EFFECT.thoughtHot, alpha);
@@ -605,9 +631,20 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     },
     setTalking: (nextTalking: boolean) => {
       talking = nextTalking;
-      if (nextTalking) applyActivity({ kind: 'talking', text: 'speaking' });
+      if (nextTalking && !muted) applyActivity({ kind: 'talking', text: 'speaking' });
       redrawFace();
       redrawSignal();
+    },
+    setMuted: (nextMuted: boolean) => {
+      muted = nextMuted;
+      if (muted) {
+        talking = false;
+        mouthOpen = 0;
+      }
+      redrawFace();
+      redrawSignal();
+      drawActivityProp();
+      refreshActivityText();
     },
   };
 }

@@ -71,7 +71,7 @@ export function loadConfig(): CompanionConfig {
     // Proxy base; MAIN PATCHes the live ngrok URL onto the Vapi assistant each
     // launch, but the renderer-side inline assistant still needs a value.
     customLlmUrl: read('customLlmUrl', 'VITE_CUSTOM_LLM_URL', 'http://127.0.0.1:8787'),
-    customLlmModel: read('customLlmModel', 'VITE_CUSTOM_LLM_MODEL', 'deepseek-ai/DeepSeek-R1-0528'),
+    customLlmModel: read('customLlmModel', 'VITE_CUSTOM_LLM_MODEL', 'deepseek-ai/DeepSeek-V3.2'),
     transcriberModel: read('transcriberModel', 'VITE_TRANSCRIBER_MODEL', 'nova-2'),
     voiceId: read('voiceId', 'VITE_VAPI_VOICE_ID', 'burt'),
     modelUrl: read('modelUrl', 'VITE_LIVE2D_MODEL_URL', './live2d/Haru.model3.json'),

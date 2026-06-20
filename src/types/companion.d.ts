@@ -26,10 +26,14 @@ export interface CompanionBridge {
   runTask(prompt: string, agent: AgentKindArg): Promise<{ runId: string }>;
   /** SIGTERM/abort the active runner for a given runId (or the latest run if omitted). */
   cancelTask(runId?: string): Promise<void>;
+  /** Move the current floating BrowserWindow by screen-pixel deltas. */
+  moveWindowBy(delta: { dx: number; dy: number }): Promise<void>;
   /** Subscribe to the normalized executor event stream; returns an unsubscribe fn. */
   onActionEvent(cb: (e: ActionEvent) => void): () => void;
   /** Subscribe to run-finished markers; returns an unsubscribe fn. */
   onRunEnd(cb: (p: { runId: string }) => void): () => void;
+  /** Subscribe to global demo mute toggles; returns an unsubscribe fn. */
+  onMicToggleMute(cb: () => void): () => void;
 }
 
 export type AgentKindArg = 'codex' | 'claude';
@@ -38,7 +42,7 @@ export interface BrainBridge {
   decide(input: DecideInput): Promise<Decision>;
   describeScreen(input: { b64: string; mime: string }): Promise<string>;
   embed(input: string | string[]): Promise<number[] | number[][]>;
-  /** DeepSeek-R1 reasoning_content token deltas -> avatar 'thinking'. Returns unsubscribe. */
+  /** DeepSeek reasoning_content token deltas -> avatar 'thinking'. Returns unsubscribe. */
   onReasoning(cb: (delta: string) => void): () => void;
   /** Optional live JSON-preview content deltas. Returns unsubscribe. */
   onContent(cb: (delta: string) => void): () => void;
@@ -50,7 +54,7 @@ export interface MemoryBridge {
 }
 
 export interface VisionBridge {
-  /** MAIN captures the screen + Qwen2-VL; may reject with BlackFrameError (TCC denied). */
+  /** MAIN captures the screen + Qwen2.5-VL; may reject with BlackFrameError (TCC denied). */
   ask(prompt: string): Promise<string>;
 }
 

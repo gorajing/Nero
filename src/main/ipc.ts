@@ -7,6 +7,7 @@
 // Each handler's sibling call:
 //   CH.micStatus          -> mic.getMicStatus()                (this component)
 //   CH.micRequest         -> mic.ensureMicAccess()             (this component)
+//   CH.windowMoveBy       -> current BrowserWindow.setPosition()
 //   CH.turnRun            -> orchestrator.runTurn()            (recall+decide+dispatch)
 //   CH.runTask            -> orchestrator.runTask()            -> executor.getExecutor()
 //   CH.cancelTask         -> orchestrator.cancelTask()
@@ -16,7 +17,7 @@
 //   CH.memoryRemember     -> memory.remember()                 (sibling: src/memory)
 //   CH.memoryRecall       -> memory.recall()                   (sibling: src/memory)
 //   CH.visionAsk          -> vision.askScreen()                (sibling: src/vision)
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { CH } from '../shared/ipc';
 import type { MicStatus, TurnInput } from '../shared/ipc';
 import type { Decision, DecideInput } from '../shared/brain';
@@ -31,10 +32,30 @@ function asAgentKind(v: unknown): AgentKind {
   return v === 'claude' ? 'claude' : 'codex';
 }
 
+function finitePixelDelta(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : 0;
+}
+
 export function registerIpcHandlers(): void {
   // ---- Mic (this component) ----
   ipcMain.handle(CH.micStatus, (): MicStatus => getMicStatus());
   ipcMain.handle(CH.micRequest, (): Promise<MicStatus> => ensureMicAccess());
+
+  // ---- Window chrome (floating Nero) ----
+  ipcMain.handle(
+    CH.windowMoveBy,
+    (event, delta: { dx?: unknown; dy?: unknown }): void => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (!win) return;
+
+      const dx = finitePixelDelta(delta?.dx);
+      const dy = finitePixelDelta(delta?.dy);
+      if (dx === 0 && dy === 0) return;
+
+      const [x, y] = win.getPosition();
+      win.setPosition(x + dx, y + dy, false);
+    },
+  );
 
   // ---- Orchestrator ----
   ipcMain.handle(

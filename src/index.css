@@ -41,7 +41,13 @@ body.floating-window {
 body.floating-window #live2d-canvas {
   app-region: no-drag;
   -webkit-app-region: no-drag;
-  cursor: pointer !important;
+  cursor: grab !important;
+  touch-action: none;
+  user-select: none;
+}
+
+body.floating-window #live2d-canvas.dragging {
+  cursor: grabbing !important;
 }
 
 html.floating-window #app,
