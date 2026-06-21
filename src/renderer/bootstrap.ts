@@ -133,9 +133,13 @@ export async function bootstrap(): Promise<void> {
   if (config.floatingWindow) {
     canvas.setAttribute('role', 'button');
     canvas.setAttribute('aria-label', 'Start talking to Nero');
-    canvas.title = 'Click to talk to Nero. Right-click or press M to mute. Drag to move.';
+    canvas.title = 'Click to pet Nero. Hold to talk. Drag to move. Right-click or M to mute.';
     canvas.style.cursor = 'grab';
-    installFloatingWindowGesture(canvas, startVoiceCall);
+    installFloatingWindowGesture(canvas, {
+      onPet: () => driver.pet?.(),
+      onTalkStart: () => { void startVoiceCall(); },
+      onTalkEnd: () => { voice.endCall(); setCallActive(false); },
+    });
     canvas.addEventListener('contextmenu', (ev) => {
       ev.preventDefault();
       setMicMuted(!micMuted);
@@ -250,21 +254,37 @@ export async function bootstrap(): Promise<void> {
   };
 }
 
+interface FloatingGestureHandlers {
+  onPet: () => void;
+  onTalkStart: () => void;
+  onTalkEnd: () => void;
+}
+
 function installFloatingWindowGesture(
   canvas: HTMLCanvasElement,
-  onTap: () => void | Promise<void>,
+  handlers: FloatingGestureHandlers,
 ): void {
   const dragThresholdPx = 4;
+  const holdToTalkMs = 350; // hold still this long => push-to-talk
   let pointerId: number | null = null;
   let startX = 0;
   let startY = 0;
   let lastX = 0;
   let lastY = 0;
   let dragging = false;
+  let talking = false;
+  let holdTimer: ReturnType<typeof setTimeout> | null = null;
 
+  function clearHold(): void {
+    if (holdTimer !== null) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  }
   function resetGesture(): void {
     pointerId = null;
     dragging = false;
+    clearHold();
     canvas.classList.remove('dragging');
     canvas.style.cursor = 'grab';
   }
@@ -272,33 +292,34 @@ function installFloatingWindowGesture(
   canvas.addEventListener('pointerdown', (ev) => {
     if (!ev.isPrimary || ev.button !== 0) return;
     pointerId = ev.pointerId;
-    startX = ev.screenX;
-    startY = ev.screenY;
-    lastX = ev.screenX;
-    lastY = ev.screenY;
+    startX = lastX = ev.screenX;
+    startY = lastY = ev.screenY;
     dragging = false;
+    talking = false;
     canvas.setPointerCapture(ev.pointerId);
     canvas.style.cursor = 'grabbing';
+    // Hold still long enough with no drag => push-to-talk.
+    holdTimer = setTimeout(() => {
+      talking = true;
+      handlers.onTalkStart();
+    }, holdToTalkMs);
     ev.preventDefault();
   });
 
   canvas.addEventListener('pointermove', (ev) => {
     if (pointerId !== ev.pointerId) return;
-
     const totalDx = ev.screenX - startX;
     const totalDy = ev.screenY - startY;
-    if (!dragging && Math.hypot(totalDx, totalDy) >= dragThresholdPx) {
+    if (!dragging && !talking && Math.hypot(totalDx, totalDy) >= dragThresholdPx) {
       dragging = true;
+      clearHold(); // a drag is not a hold-to-talk
       canvas.classList.add('dragging');
     }
-
     if (!dragging) return;
-
     const dx = ev.screenX - lastX;
     const dy = ev.screenY - lastY;
     lastX = ev.screenX;
     lastY = ev.screenY;
-
     const companion = getCompanion();
     if (companion?.moveWindowBy) {
       void companion.moveWindowBy({ dx, dy });
@@ -308,20 +329,22 @@ function installFloatingWindowGesture(
 
   canvas.addEventListener('pointerup', (ev) => {
     if (pointerId !== ev.pointerId) return;
-    const wasDragging = dragging;
     if (canvas.hasPointerCapture(ev.pointerId)) {
       canvas.releasePointerCapture(ev.pointerId);
     }
+    clearHold();
+    if (talking) {
+      handlers.onTalkEnd(); // release ends push-to-talk
+    } else if (!dragging) {
+      handlers.onPet(); // a quick tap (no drag, no hold) = pet
+    }
     resetGesture();
     ev.preventDefault();
-
-    if (!wasDragging) {
-      void onTap();
-    }
   });
 
   canvas.addEventListener('pointercancel', (ev) => {
     if (pointerId !== ev.pointerId) return;
+    if (talking) handlers.onTalkEnd();
     resetGesture();
   });
 }

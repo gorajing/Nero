@@ -61,6 +61,8 @@ export interface Placeholder {
   setMuted(muted: boolean): void;
   /** Point the eyes toward a normalized cursor target; null re-centres. */
   setGaze(target: GazeTarget | null): void;
+  /** One-shot happy "petted" reaction. */
+  pet(): void;
 }
 
 async function modelExists(url: string): Promise<boolean> {
@@ -110,6 +112,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   const gaze = new Gaze();
   let gazeLookX = 0;
   let gazeLookY = 0;
+  let petUntil = 0;
   let blinkUntil = 0;
   let nextBlink = performance.now() + 1700;
   let activity: ActivityCue | null = null;
@@ -139,6 +142,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     errorHot: 0xff8a3d,
     muted: 0xff4d6d,
     mutedSoft: 0xffb0a8,
+    petHeart: 0xff6f91,
   } as const;
 
   const aura = new PIXI.Graphics();
@@ -405,6 +409,16 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     }
   };
 
+  const drawPetBurst = (tick = 0) => {
+    foreground.clear();
+    if (performance.now() >= petUntil) return;
+    // little hearts/sparkles above the head while the reaction lasts
+    const blink = Math.floor(tick / 8) % 2;
+    px(foreground, 8, 0, 1, 1, EFFECT.petHeart);
+    if (blink) px(foreground, 11, 1, 1, 1, EFFECT.successGold);
+    px(foreground, 12, -1, 1, 1, EFFECT.petHeart);
+  };
+
   const activeActivity = (alpha: number): ActivityCue | null => {
     if (activity && alpha > 0) return activity;
     if (state === 'thinking') return { kind: 'thinking', text: 'thinking' };
@@ -618,6 +632,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     redrawFace(tick, action);
     redrawAura(tick);
     redrawSignal(tick);
+    drawPetBurst(tick);
     drawActivityProp(tick);
   }, undefined, PIXI.UPDATE_PRIORITY.LOW);
 
@@ -683,6 +698,9 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     },
     setGaze: (target: GazeTarget | null) => {
       gaze.setTarget(target);
+    },
+    pet: () => {
+      petUntil = performance.now() + 900;
     },
   };
 }

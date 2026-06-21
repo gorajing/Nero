@@ -49,6 +49,8 @@ export interface CharacterDriver {
   setMuted(muted: boolean): void;
   /** Point the eyes toward a normalized cursor target; null re-centres. No-op for a real model. */
   setGaze?(target: GazeTarget | null): void;
+  /** Trigger a one-shot happy "petted" reaction (ears perk, tail flick, sparkle). */
+  pet?(): void;
   /** Play a pre-rendered narration clip with built-in lip-sync (model.speak). */
   speak?(audioUrl: string, onFinish?: () => void): void;
   /** Stop any speak() playback. */
