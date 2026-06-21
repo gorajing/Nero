@@ -47,8 +47,10 @@ export async function bootstrap(): Promise<void> {
   const timeline = new ActionTimeline();
   subscribeActionEvents({ character: driver, timeline, captions });
 
-  // Aliveness: the cat watches the cursor (gaze eased toward the pointer).
-  getCompanion()?.onCursor?.((target) => { driver.poke?.(); driver.setGaze?.(target); });
+  // Aliveness: the cat watches the cursor (gaze eased toward the pointer). Gaze
+  // ONLY — cursor movement must NOT keep the cat awake; poke is reserved for real
+  // interactions (pet/summon/task), which is what makes idle->sleep reachable.
+  getCompanion()?.onCursor?.((target) => driver.setGaze?.(target));
 
   // 4: voice.
   const onToolCalls = (list: VapiToolCall[]) => {
@@ -70,6 +72,7 @@ export async function bootstrap(): Promise<void> {
 
   const setCallActive = (active: boolean, status?: string): void => {
     callActive = active;
+    driver.setInCall?.(active);
     if (status) setStatus(status);
     if (startBtn) startBtn.disabled = active || callStarting;
     if (stopBtn) stopBtn.disabled = !active;
@@ -133,12 +136,12 @@ export async function bootstrap(): Promise<void> {
   if (config.floatingWindow) {
     canvas.setAttribute('role', 'button');
     canvas.setAttribute('aria-label', 'Start talking to Nero');
-    canvas.title = 'Click to pet Nero. Hold to talk. Drag to move. Right-click or M to mute.';
+    canvas.title = 'Click or hold to pet Nero. Drag to move. Right-click or M to mute.';
     canvas.style.cursor = 'grab';
+    // The cat's body carries ONLY affection + move (interaction spec §4.1). Talk
+    // is no longer a body gesture — it moves to the menu/console (Phase B/C).
     installFloatingWindowGesture(canvas, {
       onPet: () => { driver.poke?.(); driver.pet?.(); },
-      onTalkStart: () => { void startVoiceCall(); },
-      onTalkEnd: () => { voice.endCall(); setCallActive(false); },
     });
     canvas.addEventListener('contextmenu', (ev) => {
       ev.preventDefault();
@@ -258,54 +261,55 @@ export async function bootstrap(): Promise<void> {
 }
 
 interface FloatingGestureHandlers {
+  /** Affection — fired instantly on press, then repeated while held still. */
   onPet: () => void;
-  onTalkStart: () => void;
-  onTalkEnd: () => void;
 }
 
+// The cat's body carries exactly two verbs (interaction spec §4.1): TAP/HOLD = pet
+// (instant, then sustained), DRAG (past threshold) = move. No timer arbitrates
+// between meanings, so nothing is ambiguous and a press can never start a call.
 function installFloatingWindowGesture(
   canvas: HTMLCanvasElement,
   handlers: FloatingGestureHandlers,
 ): void {
-  const dragThresholdPx = 4;
-  const holdToTalkMs = 350; // hold still this long => push-to-talk
+  const dragThresholdPx = 6;
+  const sustainedPetMs = 450; // keep petting while the press is held still
   let pointerId: number | null = null;
   let startX = 0;
   let startY = 0;
   let lastX = 0;
   let lastY = 0;
   let dragging = false;
-  let talking = false;
-  let holdTimer: ReturnType<typeof setTimeout> | null = null;
+  let petTimer: ReturnType<typeof setInterval> | null = null;
 
-  function clearHold(): void {
-    if (holdTimer !== null) {
-      clearTimeout(holdTimer);
-      holdTimer = null;
+  function stopPet(): void {
+    if (petTimer !== null) {
+      clearInterval(petTimer);
+      petTimer = null;
     }
   }
   function resetGesture(): void {
     pointerId = null;
     dragging = false;
-    clearHold();
+    stopPet();
     canvas.classList.remove('dragging');
     canvas.style.cursor = 'grab';
   }
 
   canvas.addEventListener('pointerdown', (ev) => {
-    if (!ev.isPrimary || ev.button !== 0) return;
+    if (!ev.isPrimary || ev.button !== 0) return; // left button only; right-click = mute/menu
     pointerId = ev.pointerId;
     startX = lastX = ev.screenX;
     startY = lastY = ev.screenY;
     dragging = false;
-    talking = false;
     canvas.setPointerCapture(ev.pointerId);
     canvas.style.cursor = 'grabbing';
-    // Hold still long enough with no drag => push-to-talk.
-    holdTimer = setTimeout(() => {
-      talking = true;
-      handlers.onTalkStart();
-    }, holdToTalkMs);
+    // Pet immediately (instant feedback, Law 1), then keep petting while held still
+    // (sustained affection). A drag cancels the sustained pet (it's a move, not a pet).
+    handlers.onPet();
+    petTimer = setInterval(() => {
+      if (!dragging) handlers.onPet();
+    }, sustainedPetMs);
     ev.preventDefault();
   });
 
@@ -313,9 +317,9 @@ function installFloatingWindowGesture(
     if (pointerId !== ev.pointerId) return;
     const totalDx = ev.screenX - startX;
     const totalDy = ev.screenY - startY;
-    if (!dragging && !talking && Math.hypot(totalDx, totalDy) >= dragThresholdPx) {
+    if (!dragging && Math.hypot(totalDx, totalDy) >= dragThresholdPx) {
       dragging = true;
-      clearHold(); // a drag is not a hold-to-talk
+      stopPet(); // a drag is a move, not petting
       canvas.classList.add('dragging');
     }
     if (!dragging) return;
@@ -335,19 +339,12 @@ function installFloatingWindowGesture(
     if (canvas.hasPointerCapture(ev.pointerId)) {
       canvas.releasePointerCapture(ev.pointerId);
     }
-    clearHold();
-    if (talking) {
-      handlers.onTalkEnd(); // release ends push-to-talk
-    } else if (!dragging) {
-      handlers.onPet(); // a quick tap (no drag, no hold) = pet
-    }
     resetGesture();
     ev.preventDefault();
   });
 
   canvas.addEventListener('pointercancel', (ev) => {
     if (pointerId !== ev.pointerId) return;
-    if (talking) handlers.onTalkEnd();
     resetGesture();
   });
 }

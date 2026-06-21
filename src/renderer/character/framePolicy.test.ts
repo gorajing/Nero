@@ -15,4 +15,13 @@ describe('framePolicy', () => {
     expect(framePolicy(true, 'drowsy', false)).toEqual({ state: 'idle', running: true, targetFps: 12 });
     expect(framePolicy(true, 'asleep', false)).toEqual({ state: 'asleep', running: true, targetFps: 6 });
   });
+
+  it('keeps full-rate during an active call even when idle (inCall)', () => {
+    expect(framePolicy(true, 'asleep', false, true)).toEqual({ state: 'active', running: true, targetFps: 60 });
+    expect(framePolicy(true, 'drowsy', false, true)).toEqual({ state: 'active', running: true, targetFps: 60 });
+  });
+
+  it('still stops when occluded even if in a call', () => {
+    expect(framePolicy(false, 'awake', false, true)).toEqual({ state: 'occluded', running: false, targetFps: 0 });
+  });
 });

@@ -68,7 +68,7 @@ Grant **Microphone** + **Screen Recording** to the launching binary; **relaunch*
 ```
 npm start
 ```
-Summon (Cmd+Shift+Space) → click **Start** in the full UI, or click **Nero** once in floating mode (mic-gesture gate) → speak a task → the character thinks (Nebius `reasoning_content`) → drives Codex in `COMPANION_WORKDIR` (each action narrated + animated) → writes to Insforge memory. Then ask *"what did we do?"* for the pgvector recall beat.
+Summon (Cmd+Shift+Space) → type a task in the prompt box (full UI), or click **Start** for a voice session → the character thinks (Nebius `reasoning_content`) → drives Codex in `COMPANION_WORKDIR` (each action narrated + animated) → writes to Insforge memory. Then ask *"what did we do?"* for the pgvector recall beat. *(In floating mode the cat's body is pet/move only — tapping it pets it; a local task box lands in Phase B. See the interaction design spec.)*
 
 ### Optional floating character window
 
@@ -81,8 +81,9 @@ COMPANION_FLOATING_WINDOW=1 npm start
 This keeps the normal window as the default. The opt-in mode shrinks the
 Electron window, removes the frame, makes the background transparent, hides every
 overlay panel so the only visible surface is the cat, and keeps Nero above normal
-windows across macOS Spaces/full-screen apps. Click Nero once to start the voice
-session. Use the normal app window for controls and debugging.
+windows across macOS Spaces/full-screen apps. **Tap or hold the cat to pet it,
+drag to move, right-click to mute** (interaction spec §4.1). Use the normal app
+window for tasking, controls, and debugging.
 
 ## Proven vs. needs-your-machine
 - **✅ Proven headlessly:** all 8 modules type-check together (0 src errors); executor live-verified vs real codex 0.139.0; renderer Vite build OK (500 modules); brain/memory/vision/proxy code-complete + scoped-clean.

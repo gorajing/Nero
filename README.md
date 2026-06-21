@@ -100,11 +100,14 @@ For the floating desktop agent:
 COMPANION_FLOATING_WINDOW=1 npm start
 ```
 
-The floating mode opens a transparent, frameless 420x460 window that hides all
-controls and shows only the cat. Click Nero once to start the voice session.
+The floating mode opens a transparent, frameless 380x400 window that hides all
+controls and shows only the cat. **Tap or hold the cat to pet it; drag to move it;
+right-click to mute.** The cat's body carries only affection + move — talk and
+tasking live off the body (see the interaction design spec at
+[`docs/superpowers/specs/2026-06-20-nero-interaction-design.md`](docs/superpowers/specs/2026-06-20-nero-interaction-design.md)).
 The floating window stays above normal windows and across macOS Spaces,
-including full-screen apps. Use the normal app window when you need the input
-box, call controls, captions, and action timeline.
+including full-screen apps. Use the normal app window when you need to give Nero a
+task (typed prompt), call controls, captions, and the action timeline.
 
 Nero currently keeps the `COMPANION_*` environment-variable prefix because those
 names are part of the existing IPC/config surface.

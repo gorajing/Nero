@@ -69,6 +69,8 @@ export interface Placeholder {
   poke(): void;
   /** Force full frame-rate while the agent is working/talking. */
   setBusy(busy: boolean): void;
+  /** A live voice call is active (keeps the cat awake, blocks sleep). */
+  setInCall(active: boolean): void;
 }
 
 async function modelExists(url: string): Promise<boolean> {
@@ -121,6 +123,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   let petUntil = 0;
   const presence = new Activity(performance.now());
   let busy = false;
+  let inCall = false;
   let energy: Energy = 'awake';
   let docVisible = typeof document === 'undefined' ? true : document.visibilityState !== 'hidden';
   let prevEnergy: Energy = 'awake';
@@ -212,7 +215,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   type CatAction = 'standing' | 'sitting' | 'walking';
 
   const actionForTick = (tick = 0): CatAction => {
-    if (energy === 'asleep' && state === 'idle') return 'sitting'; // curled; see drawCat
+    if (energy === 'asleep' && !busy && !inCall) return 'sitting'; // curled; see drawCat
     if (state === 'working') return 'walking';
     if (state === 'thinking') return 'sitting';
     if (state === 'idle' && isFloatingWindow()) {
@@ -304,7 +307,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       px(cat, x, y, 1, 1, CAT.white);
     };
 
-    if (energy === 'asleep' && state === 'idle') {
+    if (energy === 'asleep' && !busy && !inCall) {
       // tight curl: low body, tail wrapped, no legs
       px(cat, 5, 13, 9, 2, CAT.black);
       px(cat, 6, 12, 7, 1, CAT.black);
@@ -365,7 +368,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
 
     eyes.clear();
     mouth.clear();
-    const asleep = energy === 'asleep' && state === 'idle';
+    const asleep = energy === 'asleep' && !busy && !inCall;
     if (!blink && !asleep) {
       px(eyes, face.eyeLeft + lookX, face.eyeY + lookY, 1, 1, eyeColor);
       px(eyes, face.eyeRight + lookX, face.eyeY + lookY, 1, 1, eyeColor);
@@ -634,7 +637,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     energy = presence.energy(nowMs);
     if (prevEnergy === 'asleep' && energy !== 'asleep') stretchUntil = nowMs + 700;
     prevEnergy = energy;
-    const plan = framePolicy(docVisible, energy, busy);
+    const plan = framePolicy(docVisible, energy, busy, inCall);
     app.ticker.maxFPS = plan.targetFps;
     if (!plan.running) {
       app.ticker.stop();
@@ -666,9 +669,15 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       mutedBadge.alpha = 0.96;
       mutedBadge.position.set(124, -138 + Math.round(Math.sin(tick / 26) * 4));
     }
-    const g = gaze.step();
-    gazeLookX = g.lookX;
-    gazeLookY = g.lookY;
+    if (energy === 'asleep') {
+      // a sleeping cat doesn't track the cursor (eyes are closed anyway)
+      gazeLookX = 0;
+      gazeLookY = 0;
+    } else {
+      const g = gaze.step();
+      gazeLookX = g.lookX;
+      gazeLookY = g.lookY;
+    }
     drawTail(tick, action);
     drawCat(tick, action);
     redrawFace(tick, action);
@@ -749,6 +758,9 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     },
     setBusy: (next: boolean) => {
       busy = next;
+    },
+    setInCall: (active: boolean) => {
+      inCall = active;
     },
   };
 }

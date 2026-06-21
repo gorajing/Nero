@@ -33,11 +33,8 @@ body.floating-window {
   background: transparent;
 }
 
-body.floating-window {
-  app-region: drag;
-  -webkit-app-region: drag;
-}
-
+/* The window moves only via the JS pointer drag (moveWindowBy) — no CSS
+   app-region drag, so there is a single drag path (interaction spec §12). */
 body.floating-window #live2d-canvas {
   app-region: no-drag;
   -webkit-app-region: no-drag;

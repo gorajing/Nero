@@ -55,6 +55,8 @@ export interface CharacterDriver {
   poke?(): void;
   /** Force full frame-rate while busy (agent working / talking). */
   setBusy?(busy: boolean): void;
+  /** A live voice call is active (keeps the cat awake). */
+  setInCall?(active: boolean): void;
   /** Play a pre-rendered narration clip with built-in lip-sync (model.speak). */
   speak?(audioUrl: string, onFinish?: () => void): void;
   /** Stop any speak() playback. */

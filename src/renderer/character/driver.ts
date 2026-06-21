@@ -75,6 +75,10 @@ class Live2DCharacterDriver implements CharacterDriver {
     this.avatar.placeholder?.setBusy(busy);
   }
 
+  setInCall(active: boolean): void {
+    this.avatar.placeholder?.setInCall(active);
+  }
+
   speak(audioUrl: string, onFinish?: () => void): void {
     const model = this.avatar.model;
     if (!model || typeof model.speak !== 'function') {
