@@ -123,6 +123,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   let busy = false;
   let energy: Energy = 'awake';
   let docVisible = typeof document === 'undefined' ? true : document.visibilityState !== 'hidden';
+  let prevEnergy: Energy = 'awake';
+  let stretchUntil = 0;
   let blinkUntil = 0;
   let nextBlink = performance.now() + 1700;
   let activity: ActivityCue | null = null;
@@ -210,6 +212,7 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   type CatAction = 'standing' | 'sitting' | 'walking';
 
   const actionForTick = (tick = 0): CatAction => {
+    if (energy === 'asleep' && state === 'idle') return 'sitting'; // curled; see drawCat
     if (state === 'working') return 'walking';
     if (state === 'thinking') return 'sitting';
     if (state === 'idle' && isFloatingWindow()) {
@@ -301,6 +304,15 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
       px(cat, x, y, 1, 1, CAT.white);
     };
 
+    if (energy === 'asleep' && state === 'idle') {
+      // tight curl: low body, tail wrapped, no legs
+      px(cat, 5, 13, 9, 2, CAT.black);
+      px(cat, 6, 12, 7, 1, CAT.black);
+      px(cat, 11, 13, 2, 2, CAT.white);
+      drawHead('sitting');
+      return;
+    }
+
     if (action === 'sitting') {
       px(cat, 7, 9, 5, 6, CAT.black);
       px(cat, 6, 11, 7, 4, CAT.black);
@@ -353,7 +365,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
 
     eyes.clear();
     mouth.clear();
-    if (!blink) {
+    const asleep = energy === 'asleep' && state === 'idle';
+    if (!blink && !asleep) {
       px(eyes, face.eyeLeft + lookX, face.eyeY + lookY, 1, 1, eyeColor);
       px(eyes, face.eyeRight + lookX, face.eyeY + lookY, 1, 1, eyeColor);
     }
@@ -619,6 +632,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
   app.ticker.add(() => {
     const nowMs = performance.now();
     energy = presence.energy(nowMs);
+    if (prevEnergy === 'asleep' && energy !== 'asleep') stretchUntil = nowMs + 700;
+    prevEnergy = energy;
     const plan = framePolicy(docVisible, energy, busy);
     app.ticker.maxFPS = plan.targetFps;
     if (!plan.running) {
@@ -642,7 +657,8 @@ function buildPlaceholder(app: PIXI.Application): Placeholder {
     const focusLift = state === 'working' ? -6 : state === 'thinking' ? -4 : state === 'error' ? 4 : 0;
     body.scale.x = action === 'walking' ? walkDirection(tick) : 1;
     body.position.x = action === 'walking' ? walkOffset(tick) : 0;
-    body.position.y = breathe + focusLift;
+    const stretch = nowMs < stretchUntil ? -3 : 0;
+    body.position.y = breathe + focusLift + stretch;
     mutedBadge.visible = muted;
     if (muted) {
       const badgeScale = (0.18 + Math.sin(tick / 30) * 0.005) * Math.min(1, Math.max(0.72, currentFloatingScale));
