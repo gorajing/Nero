@@ -1,7 +1,7 @@
 # Nero — Interaction Design Spec
 
 **Status:** Proposed (for review) · **Date:** 2026-06-20 · **Owner:** Jin
-**Supersedes:** the ad-hoc gesture handling in `src/renderer/bootstrap.ts::installFloatingWindowGesture` and the piecemeal "tap=pet / hold=talk" iterations.
+**Supersedes:** the ad-hoc gesture handling in `src/renderer/bootstrap.ts::installFloatingWindowGesture`, the piecemeal "tap=pet / hold=talk" iterations, **and the interaction sections of the product-plan docs** — this is now the authoritative interaction document.
 
 > This spec defines the **entire interaction model** for Nero — every way a user touches, summons, tasks, moves, mutes, and dismisses the pet, across every state — as one coherent system, so we stop patching gestures one at a time. It is the contract the implementation plans build against.
 
@@ -175,6 +175,7 @@ The pet bond dies the instant the creature feels in control of the user. Non-neg
 | **Bare `m` key has no focus guard** | `bootstrap.ts` document keydown | Focus-guard or remove; keep ⌘⇧M global. |
 | **Voice call can't be exited cleanly / bills forever** | `voice/index.ts` | Explicit **End call** + **idle auto-timeout** + persistent "on a call" tell. |
 | **Temp sleep thresholds** (4s/10s) left in for testing | `activity.ts` | **Revert to 45_000 / 120_000.** |
+| **Frame governor ignores `inCall`** — `framePolicy(visible, energy, busy)` never sees `inCall`, so an *idle voice call* throttles the cat to sleep-fps (6) while the pose stays awake (caught in audit) | `avatar.ts` ticker / `framePolicy.ts` | **Feed `inCall` into the policy** — treat `busy ∥ inCall` as keep-full-rate — or set `busy` for the duration of a call. |
 | **done/error can strand the cat** | avatar state handling | **Self-decay to idle ~4s** after a terminal state. |
 
 ## 13. What changes vs. the current code (concrete)
@@ -201,7 +202,7 @@ The pet bond dies the instant the creature feels in control of the user. Non-neg
 
 ## 15. Scope & phasing (each phase its own implementation plan)
 
-- **Phase A — The deletion + the fixes** *(first; mostly removal, high value, low risk)*: rewrite the gesture handler (tap/hold=pet, drag=move; **right-click temporarily keeps mute** until the Menu lands in Phase C), **decouple gaze from poke** (fixes sleep + idle), revert temp thresholds, single drag path, persistent mute badge, done/error self-decay.
+- **Phase A — The deletion + the fixes** *(first; mostly removal, high value, low risk)*: rewrite the gesture handler (tap/hold=pet, drag=move; **right-click temporarily keeps mute** until the Menu lands in Phase C), **decouple gaze from poke** (fixes sleep + idle), revert temp thresholds, single drag path (remove the CSS `app-region: drag`), persistent mute badge, **feed `inCall` into `framePolicy`**, done/error self-decay, and **update `README.md` / `RUN.md`** (window is 380×400 not 420×460; tap=pet, not click=voice) to point at this spec.
 - **Phase B — The Ask input**: the floating task entry → `turnRun` (+ ⌘⇧Space focuses it; mid-run confirm). Closes the deepest seam.
 - **Phase C — The context Menu**: state-aware right-click Menu (Ask, Talk, Stop[working], Mute, Sleep/DND, Hide, Quit-not-here) + Stop-from-cat.
 - **Phase D — The Tray**: menubar Tray mirroring the Menu; Quit; show/hide; mute-with-state.
