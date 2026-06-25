@@ -1,12 +1,12 @@
 # Nero
 
+**Midsummer Multimodal AI Hackathon: Insforge 3rd Place** ([event page](https://luma.com/gicxj4ys?tk=6LHS8D)).
+
 **A black pixel-cat coding agent with a face, a voice, and a memory.**
 
 Nero is an Electron app where an animated black pixel cat listens to a task,
 thinks through it with Nebius, drives a real coding agent, narrates the work as
 it happens, and stores what happened in Insforge memory.
-
-**Midsummer Multimodal AI Hackathon: Insforge 3rd Place** ([event page](https://luma.com/gicxj4ys?tk=6LHS8D)).
 
 ```text
 ask -> recall memory -> think on Nebius -> run Codex or Claude -> remember the result
